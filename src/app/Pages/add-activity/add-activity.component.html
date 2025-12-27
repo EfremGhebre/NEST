@@ -1,0 +1,219 @@
+<div class="add-activity-container">
+  <div class="form-container">
+    <!-- Header -->
+    <div class="form-header">
+      <h1 class="form-title">
+        <i class="bi bi-plus-circle"></i>
+        Add New Activity
+      </h1>
+      <p class="form-subtitle">Create a new activity to track your progress</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="error-message">
+      <i class="bi bi-exclamation-triangle"></i>
+      {{ error }}
+    </div>
+
+    <!-- Activity Form -->
+    <form [formGroup]="activityForm" (ngSubmit)="onSubmit()" class="activity-form">
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h3 class="section-title">Basic Information</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="title" class="form-label">
+              Title <span class="required">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="title" 
+              formControlName="title" 
+              class="form-input"
+              [class.error]="isFieldInvalid('title')"
+              placeholder="Enter activity title"
+            >
+            <div *ngIf="isFieldInvalid('title')" class="error-text">
+              {{ getFieldError('title') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="category" class="form-label">
+              Category <span class="required">*</span>
+            </label>
+            <select 
+              id="category" 
+              formControlName="category" 
+              class="form-select"
+              [class.error]="isFieldInvalid('category')"
+            >
+              <option value="">Select a category</option>
+              <option *ngFor="let category of categories" [value]="category">
+                {{ category }}
+              </option>
+            </select>
+            <div *ngIf="isFieldInvalid('category')" class="error-text">
+              {{ getFieldError('category') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description" class="form-label">
+            Description <span class="required">*</span>
+          </label>
+          <textarea 
+            id="description" 
+            formControlName="description" 
+            class="form-textarea"
+            [class.error]="isFieldInvalid('description')"
+            placeholder="Describe your activity..."
+            rows="4"
+          ></textarea>
+          <div *ngIf="isFieldInvalid('description')" class="error-text">
+            {{ getFieldError('description') }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Scheduling -->
+      <div class="form-section">
+        <h3 class="section-title">Scheduling & Status</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="date" class="form-label">
+              Date <span class="required">*</span>
+            </label>
+            <input 
+              type="date" 
+              id="date" 
+              formControlName="date" 
+              class="form-input"
+              [class.error]="isFieldInvalid('date')"
+            >
+            <div *ngIf="isFieldInvalid('date')" class="error-text">
+              {{ getFieldError('date') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="duration" class="form-label">Duration (minutes)</label>
+            <input 
+              type="number" 
+              id="duration" 
+              formControlName="duration" 
+              class="form-input"
+              placeholder="e.g., 60"
+              min="1"
+            >
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="status" class="form-label">
+              Status <span class="required">*</span>
+            </label>
+            <select 
+              id="status" 
+              formControlName="status" 
+              class="form-select"
+              [class.error]="isFieldInvalid('status')"
+            >
+              <option *ngFor="let status of statuses" [value]="status.value">
+                {{ status.label }}
+              </option>
+            </select>
+            <div *ngIf="isFieldInvalid('status')" class="error-text">
+              {{ getFieldError('status') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="priority" class="form-label">
+              Priority <span class="required">*</span>
+            </label>
+            <select 
+              id="priority" 
+              formControlName="priority" 
+              class="form-select"
+              [class.error]="isFieldInvalid('priority')"
+            >
+              <option *ngFor="let priority of priorities" [value]="priority.value">
+                {{ priority.label }}
+              </option>
+            </select>
+            <div *ngIf="isFieldInvalid('priority')" class="error-text">
+              {{ getFieldError('priority') }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Information -->
+      <div class="form-section">
+        <h3 class="section-title">Additional Information</h3>
+        
+        <div class="form-group">
+          <label for="location" class="form-label">Location</label>
+          <input 
+            type="text" 
+            id="location" 
+            formControlName="location" 
+            class="form-input"
+            placeholder="Where will this activity take place?"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="tags" class="form-label">Tags</label>
+          <input 
+            type="text" 
+            id="tags" 
+            formControlName="tags" 
+            class="form-input"
+            placeholder="Enter tags separated by commas (e.g., urgent, important, fun)"
+          >
+          <small class="form-hint">Separate multiple tags with commas</small>
+        </div>
+
+        <div class="form-group">
+          <label for="notes" class="form-label">Notes</label>
+          <textarea 
+            id="notes" 
+            formControlName="notes" 
+            class="form-textarea"
+            placeholder="Any additional notes or reminders..."
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="onCancel()"
+          [disabled]="loading"
+        >
+          <i class="bi bi-x-circle"></i>
+          Cancel
+        </button>
+        
+        <button 
+          type="submit" 
+          class="btn btn-primary" 
+          [disabled]="loading || activityForm.invalid"
+        >
+          <i class="bi bi-check-circle" *ngIf="!loading"></i>
+          <div class="spinner" *ngIf="loading"></div>
+          {{ loading ? 'Creating...' : 'Create Activity' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

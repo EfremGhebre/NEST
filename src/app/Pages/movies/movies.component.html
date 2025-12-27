@@ -1,0 +1,239 @@
+<div class="movies-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="bi bi-film"></i>
+        My Movies
+      </h1>
+      <p class="page-subtitle">Track your favorite films and movies</p>
+    </div>
+    <button class="add-button" (click)="toggleAddForm()">
+      <i class="bi bi-plus-circle"></i>
+      {{ showAddForm ? 'Close' : 'Add New Movie' }}
+    </button>
+  </div>
+
+  <!-- Add Movie Form -->
+  <div class="add-form-section" *ngIf="showAddForm">
+    <div class="form-container">
+      <h3 class="form-title">
+        <i class="bi bi-plus-circle"></i>
+        Add New Movie
+      </h3>
+      <form class="movie-form">
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input class="form-input" type="text" [(ngModel)]="newTitle" name="title" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" [(ngModel)]="newDescription" name="description" rows="3" required placeholder="Brief description of the movie..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Director</label>
+            <input class="form-input" type="text" [(ngModel)]="newDirector" name="director" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Release Year</label>
+            <input class="form-input" type="number" [(ngModel)]="newReleaseYear" name="releaseYear" min="1900" max="2030" placeholder="e.g., 2023">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Genre</label>
+            <select class="form-input" [(ngModel)]="newGenre" name="genre">
+              <option value="">Select Genre</option>
+              <option value="Action">Action</option>
+              <option value="Comedy">Comedy</option>
+              <option value="Drama">Drama</option>
+              <option value="Horror">Horror</option>
+              <option value="Sci-Fi">Sci-Fi</option>
+              <option value="Thriller">Thriller</option>
+              <option value="Romance">Romance</option>
+              <option value="Documentary">Documentary</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rating</label>
+            <select class="form-input" [(ngModel)]="newRating" name="rating">
+              <option value="">Select Rating</option>
+              <option value="1">1 Star</option>
+              <option value="2">2 Stars</option>
+              <option value="3">3 Stars</option>
+              <option value="4">4 Stars</option>
+              <option value="5">5 Stars</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" [(ngModel)]="newNotes" name="notes" rows="2" placeholder="Additional notes about the movie..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="toggleAddForm()">Cancel</button>
+          <button type="button" class="btn btn-primary" (click)="addMovie()">Add Movie</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading movies...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    <i class="bi bi-exclamation-triangle"></i>
+    <p>{{ error }}</p>
+    <button class="retry-button" (click)="loadMovies()">Try Again</button>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && !error && movies.length === 0" class="empty-state">
+    <i class="bi bi-film"></i>
+    <h3>No movies found</h3>
+    <p>Start building your movie collection!</p>
+  </div>
+
+  <!-- Movies Grid -->
+  <div *ngIf="!isLoading && !error && movies.length > 0" class="movies-grid" [class.rows-layout]="currentLayout === 'rows'">
+    <div *ngFor="let movie of movies" 
+         class="movie-card" 
+         [class.expanded]="isMovieExpanded(movie.id)"
+         (click)="toggleMovieExpansion(movie.id)">
+      <div class="movie-header">
+        <div class="movie-title-section">
+          <h3 class="movie-title">{{ movie.title }}</h3>
+          <div class="movie-meta">
+            <span class="movie-type">Movie</span>
+            <span *ngIf="movie.genre" class="movie-genre">{{ movie.genre }}</span>
+          </div>
+        </div>
+        <div class="movie-actions" (click)="$event.stopPropagation()">
+          <button class="action-button expand" 
+                  [title]="isMovieExpanded(movie.id) ? 'Collapse' : 'Expand'"
+                  (click)="toggleMovieExpansion(movie.id, $event)">
+            <i class="bi" [class.bi-chevron-down]="!isMovieExpanded(movie.id)" [class.bi-chevron-up]="isMovieExpanded(movie.id)"></i>
+          </button>
+          <button class="action-button edit" (click)="editMovie(movie.id)" title="Edit">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="action-button delete" (click)="deleteMovie(movie.id)" title="Delete">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="movie-content">
+        <div class="movie-director">
+          <i class="bi bi-person"></i>
+          <span>{{ movie.director }}</span>
+        </div>
+        
+        <div class="movie-description">
+          <p [class.truncated]="!isMovieExpanded(movie.id)">
+            {{ isMovieExpanded(movie.id) ? movie.description : truncateText(movie.description) }}
+          </p>
+        </div>
+
+        <!-- Expanded Content -->
+        <div class="movie-details" *ngIf="isMovieExpanded(movie.id)">
+          <div class="detail-row" *ngIf="movie.releaseYear">
+            <i class="bi bi-calendar"></i>
+            <span class="detail-label">Year:</span>
+            <span class="detail-value">{{ movie.releaseYear }}</span>
+          </div>
+          <div class="detail-row" *ngIf="movie.rating">
+            <i class="bi bi-star"></i>
+            <span class="detail-label">Rating:</span>
+            <span class="detail-value">{{ movie.rating }} Star{{ movie.rating !== '1' ? 's' : '' }}</span>
+          </div>
+          <div class="detail-row" *ngIf="movie.notes">
+            <i class="bi bi-sticky"></i>
+            <div class="notes-content">
+              <span class="detail-label">Notes:</span>
+              <p class="detail-value notes">{{ movie.notes }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Count -->
+  <div *ngIf="!isLoading && !error && movies.length > 0" class="results-info">
+    <p>Showing {{ movies.length }} movie{{ movies.length === 1 ? '' : 's' }}</p>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="modal" class="modal" [style.display]="modalVisible ? 'flex' : 'none'">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Movie</h3>
+        <button class="close-modal" (click)="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input class="form-input" type="text" [(ngModel)]="editTitle" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" [(ngModel)]="editDescription" rows="3" required></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Director</label>
+            <input class="form-input" type="text" [(ngModel)]="editDirector" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Release Year</label>
+            <input class="form-input" type="number" [(ngModel)]="editReleaseYear" min="1900" max="2030">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Genre</label>
+            <select class="form-input" [(ngModel)]="editGenre">
+              <option value="">Select Genre</option>
+              <option value="Action">Action</option>
+              <option value="Comedy">Comedy</option>
+              <option value="Drama">Drama</option>
+              <option value="Horror">Horror</option>
+              <option value="Sci-Fi">Sci-Fi</option>
+              <option value="Thriller">Thriller</option>
+              <option value="Romance">Romance</option>
+              <option value="Documentary">Documentary</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rating</label>
+            <select class="form-input" [(ngModel)]="editRating">
+              <option value="">Select Rating</option>
+              <option value="1">1 Star</option>
+              <option value="2">2 Stars</option>
+              <option value="3">3 Stars</option>
+              <option value="4">4 Stars</option>
+              <option value="5">5 Stars</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" [(ngModel)]="editNotes" rows="2" placeholder="Additional notes about the movie..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="saveEditedMovie()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+

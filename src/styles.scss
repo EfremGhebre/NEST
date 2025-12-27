@@ -1,1 +1,557 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global design tokens */
+:root {
+  --bnq-primary: #0d6efd;
+  --bnq-secondary: #6c757d;
+  --bnq-success: #198754;
+  --bnq-danger: #dc3545;
+  --bnq-warning: #ffc107;
+  --bnq-light: #f8f9fa;
+  --bnq-dark: #212529;
+  --bnq-bg-start: #3cc36b; /* landing green */
+  --bnq-bg-mid: #58a9c9;   /* soft teal midpoint */
+  --bnq-bg-end: #1e90ff;   /* landing blue */
+
+  --bnq-radius: 8px;
+  --bnq-spacing: 1rem;
+  
+  /* Enhanced typography */
+  --bnq-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --bnq-font-size-sm: 0.875rem;
+  --bnq-font-size-base: 1rem;
+  --bnq-font-size-lg: 1.125rem;
+  --bnq-font-size-xl: 1.25rem;
+  --bnq-font-size-2xl: 1.5rem;
+  --bnq-line-height-tight: 1.25;
+  --bnq-line-height-normal: 1.5;
+  
+  /* Enhanced colors */
+  --bnq-text-primary: #1a202c;
+  --bnq-text-secondary: #4a5568;
+  --bnq-text-muted: #718096;
+  --bnq-border-light: #e2e8f0;
+  --bnq-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --bnq-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --bnq-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+html, body, app-root {
+  height: 100%;
+  min-height: 100vh;
+}
+
+html {
+  height: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  height: auto;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+  color: var(--bnq-text-primary);
+  font-family: var(--bnq-font-family);
+  font-size: var(--bnq-font-size-base);
+  line-height: var(--bnq-line-height-normal);
+  transition: background 0.5s ease;
+}
+
+/* Light Theme (Default) */
+body[data-theme="light"],
+body:not([data-theme]) {
+  background: linear-gradient(180deg, var(--bnq-bg-start) 0%, var(--bnq-bg-mid) 50%, var(--bnq-bg-end) 100%);
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  background-size: 100% 200vh;
+  background-position: center top;
+}
+
+html[data-theme="light"],
+html:not([data-theme]) {
+  background: linear-gradient(180deg, var(--bnq-bg-start) 0%, var(--bnq-bg-mid) 50%, var(--bnq-bg-end) 100%);
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  background-size: 100% 200vh;
+  background-position: center top;
+  min-height: 100vh;
+}
+
+/* Dark Theme */
+body[data-theme="dark"] {
+  background: linear-gradient(180deg, #ff6b35 0%, #d32f2f 50%, #1a237e 100%);
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  background-size: 100% 200vh;
+  background-position: center top;
+}
+
+html[data-theme="dark"] {
+  background: linear-gradient(180deg, #ff6b35 0%, #d32f2f 50%, #1a237e 100%);
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  background-size: 100% 200vh;
+  background-position: center top;
+  min-height: 100vh;
+}
+
+/* Dashboard Cards Dark Theme - Using translucent frosted glass */
+body[data-theme="dark"] {
+  .stat-card,
+  .quick-action-card,
+  .recent-activity,
+  .journey-item,
+  .welcome-section,
+  .inspiration-card {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  .stat-card:hover,
+  .quick-action-card:hover,
+  .journey-item:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+  }
+
+  .stat-number,
+  .action-title,
+  .recent-title,
+  .journey-content h4 {
+    color: rgba(255, 255, 255, 0.95) !important;
+  }
+
+  .stat-label,
+  .action-description,
+  .recent-author,
+  .journey-content p {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  .recent-date,
+  .action-arrow {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  .quick-action-card:hover .action-arrow {
+    color: rgba(255, 107, 53, 0.9) !important;
+  }
+
+  .recent-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Add New Buttons Dark Theme - Purple Gradient */
+  .add-button {
+    background: linear-gradient(135deg, #581870, #4a1559) !important;
+    box-shadow: 0 4px 12px rgba(88, 24, 112, 0.4) !important;
+
+    &:hover {
+      box-shadow: 0 6px 20px rgba(88, 24, 112, 0.5) !important;
+    }
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #581870, #4a1559) !important;
+    box-shadow: 0 4px 12px rgba(88, 24, 112, 0.4) !important;
+
+    &:hover {
+      box-shadow: 0 6px 20px rgba(88, 24, 112, 0.5) !important;
+    }
+  }
+
+  .page-title i {
+    color: #581870 !important;
+  }
+
+  .form-title i {
+    color: #581870 !important;
+  }
+
+  .form-input:focus,
+  .form-textarea:focus,
+  .form-select:focus,
+  .search-input:focus,
+  .filter-select:focus {
+    border-color: #581870 !important;
+  }
+
+  .loading-state .spinner {
+    border-top-color: #581870 !important;
+  }
+
+  .action-button:hover {
+    border-color: #581870 !important;
+    color: #581870 !important;
+  }
+}
+
+.bnq-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+  padding: 1.1rem 1.1rem 1rem 1.1rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  backdrop-filter: saturate(120%) blur(2px);
+}
+
+.bnq-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--bnq-primary), var(--bnq-success));
+  opacity: .85;
+}
+
+.bnq-card:hover {
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+  transform: translateY(-2px);
+  border-color: rgba(203, 213, 225, 0.9);
+}
+
+.bnq-card h5 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 .35rem 0;
+  color: var(--bnq-text-primary);
+}
+
+.bnq-card .text-muted {
+  color: var(--bnq-text-muted) !important;
+  font-size: .92rem;
+}
+
+.bnq-card p {
+  margin: .75rem 0 1rem 0;
+  color: var(--bnq-text-secondary);
+}
+
+.bnq-card .bnq-chip {
+  background: rgba(13,110,253,.12);
+  color: #0d6efd;
+  border: 1px solid rgba(13,110,253,.18);
+}
+
+.bnq-card .btn {
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.bnq-card .btn-outline-primary:hover {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.bnq-card .btn-outline-danger:hover {
+  background: #dc3545;
+  color: #fff;
+}
+
+/* Rich card layout pieces */
+.bnq-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.bnq-card-header .bnq-type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .25rem .6rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(13,110,253,.08);
+  color: #0d6efd;
+}
+
+.bnq-meta {
+  color: var(--bnq-text-muted);
+  font-size: .9rem;
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.bnq-card-body {
+  margin-top: .5rem;
+}
+
+.bnq-description {
+  margin: .25rem 0 0 0;
+  color: var(--bnq-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bnq-card-actions {
+  margin-top: .75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bnq-centered {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* Compact mode styles */
+.bnq-compact .bnq-card {
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+}
+
+.bnq-compact .bnq-card h5 {
+  font-size: 1rem;
+  margin-bottom: 0.15rem;
+}
+
+.bnq-compact .bnq-card p {
+  font-size: var(--bnq-font-size-sm);
+  margin-bottom: 0.35rem;
+}
+
+.bnq-compact .bnq-card .text-muted {
+  font-size: 0.82rem;
+  margin-bottom: 0.15rem;
+}
+
+/* Enhanced card layout for desktop */
+@media (min-width: 1200px) {
+  .bnq-card-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .bnq-card {
+    max-width: 100%;
+  }
+}
+
+/* Distinct compact mode visuals */
+.bnq-compact .bnq-card::before {
+  width: 3px;
+  opacity: .55;
+}
+
+.bnq-compact .bnq-card-grid {
+  gap: .5rem;
+}
+
+.bnq-compact .bnq-description {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.bnq-compact .bnq-card-actions .btn {
+  padding: .25rem .55rem;
+  font-size: .78rem;
+  border-radius: 8px;
+}
+
+/* Normal mode emphasis */
+.bnq-normal .bnq-card {
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.12);
+}
+
+.bnq-normal .bnq-description {
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+}
+
+.bnq-compact .btn-text { display: none; }
+.bnq-normal .btn-text { display: inline; }
+
+/* Toggle button: make state obvious */
+.bnq-compact-toggle {
+  border: 1px solid rgba(255,255,255,0.45);
+  color: #fff;
+}
+.bnq-compact-toggle.active {
+  background: linear-gradient(135deg, var(--bnq-primary), var(--bnq-success));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 6px 16px rgba(13,110,253,0.35);
+}
+
+/* Modern surfaces */
+.bnq-surface {
+  backdrop-filter: blur(6px);
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.bnq-toolbar {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.bnq-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: .25rem .6rem;
+  border-radius: 999px;
+  background: rgba(13,110,253,.12);
+  color: #0d6efd;
+  font-size: .85rem;
+}
+
+/* Admin-style input panel (like the reference image) */
+.bnq-admin {
+  background: #ffffff;
+  border: 1px solid #e6e9ef;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+.bnq-admin-header {
+  padding: .85rem 1rem;
+  border-bottom: 1px solid #eef1f5;
+  font-weight: 600;
+}
+.bnq-admin-body {
+  padding: 1rem;
+}
+.bnq-admin .form-label {
+  font-size: .85rem;
+  color: #5c6b7a;
+  margin-bottom: .3rem;
+}
+.bnq-admin .form-control {
+  border-radius: 8px;
+}
+.bnq-admin .actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: end;
+}
+
+.bnq-table {
+  width: 100%;
+  background: #fff;
+  border-radius: var(--bnq-radius);
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+}
+.bnq-table th, .bnq-table td {
+  padding: 0.65rem 0.9rem;
+  vertical-align: middle;
+}
+.bnq-table thead {
+  background: #f1f3f5;
+}
+.bnq-table tbody tr:hover {
+  background: #fafbfd;
+}
+
+.bnq-actions button {
+  margin-right: 0.5rem;
+}
+
+.bnq-section-title {
+  margin: 0 0 1rem 0;
+  font-size: var(--bnq-font-size-2xl);
+  font-weight: 600;
+  color: var(--bnq-text-primary);
+  line-height: var(--bnq-line-height-tight);
+}
+
+/* App modal (used by edit dialogs) */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  z-index: 1050;
+  padding: 1rem;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 560px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid var(--bnq-border-light);
+  box-shadow: var(--bnq-shadow-lg);
+  padding: 1.25rem;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.modal-content input.form-control {
+  margin-bottom: .75rem;
+}
+
+.modal-content .actions {
+  display: flex;
+  gap: .5rem;
+  justify-content: flex-end;
+}
+
+.close-modal {
+  position: absolute;
+  right: 1rem;
+  top: .75rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* Enhanced spacing and layout */
+.bnq-container {
+  padding: 1.5rem;
+}
+
+.bnq-card-grid {
+  gap: 1rem;
+}
+
+.bnq-card-grid .bnq-card {
+  margin-bottom: 1rem;
+}
+
+/* Compact mode toggle button */
+.bnq-compact-toggle {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: var(--bnq-font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.bnq-compact-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.bnq-compact-toggle.active {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.5);
+}

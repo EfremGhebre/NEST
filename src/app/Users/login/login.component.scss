@@ -1,0 +1,85 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to bottom, #4caf50, #1e88e5);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  
+  .landing-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 100vh;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+  }
+  
+  .welcome-section {
+    margin-bottom: 30px;
+  }
+  
+  .welcome-section h1 {
+    font-size: 2.5rem;
+    color: #fff;
+    margin-bottom: 10px;
+  }
+  
+  .welcome-section p {
+    font-size: 1.2rem;
+    color: #e0e0e0;
+  }
+  
+  .welcome-section .fa-book-reader {
+    margin-top: 15px;
+    color: #fff;
+  }
+  
+  .auth-box {
+    width: 100%;
+    max-width: 400px;
+    background: #ffffff;
+    color: #333;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+  }
+  
+  .auth-title {
+    text-align: center;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #4caf50;
+  }
+  
+  p.text-center {
+    margin-top: 15px;
+    font-size: 0.9rem;
+  }
+  
+  a.text-primary {
+    color: #1e88e5;
+    text-decoration: none;
+  }
+  
+  a.text-primary:hover {
+    text-decoration: underline;
+  }
+  
+  .btn-success {
+    background-color: #4caf50;
+    border-color: #4caf50;
+  }
+  
+  .btn-success:hover {
+    background-color: #45a049;
+  }
+  

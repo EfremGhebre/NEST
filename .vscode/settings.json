@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/09e7cd56-fae0-4b20-8855-a5fcdc7cdb1a/resourceGroups/BnQ-App/providers/Microsoft.Web/sites/My-BnQ",
+    "appService.deploySubpath": "dist"
+}

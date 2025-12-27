@@ -1,0 +1,180 @@
+<div class="dashboard-container">
+  <!-- Welcome Section -->
+  <div class="welcome-section">
+    <div class="welcome-content">
+      <h1 class="welcome-title">
+        {{ getGreeting() }} 👋
+      </h1>
+      <p class="welcome-subtitle">
+        Welcome back to your personal library. Here's what's happening with your collection.
+      </p>
+    </div>
+    <div class="welcome-illustration">
+      <i class="bi bi-house-heart-fill"></i>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="bi bi-book"></i>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ stats.totalBooks }}</h3>
+        <p class="stat-label">Total Books</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="bi bi-quote"></i>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ stats.totalQuotes }}</h3>
+        <p class="stat-label">Saved Quotes</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="bi bi-film"></i>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ stats.totalMovies }}</h3>
+        <p class="stat-label">Total Movies</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="bi bi-journal-text"></i>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ stats.totalDiaries }}</h3>
+        <p class="stat-label">Diary Entries</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="bi bi-activity"></i>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ stats.totalActivities }}</h3>
+        <p class="stat-label">Total Activities</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="bi bi-graph-up"></i>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-number">{{ stats.recentActivity }}</h3>
+        <p class="stat-label">Recent Activity</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="section">
+    <h2 class="section-title">
+      <i class="bi bi-lightning-charge me-2"></i>
+      Quick Actions
+    </h2>
+    <div class="quick-actions-grid">
+      <div 
+        *ngFor="let action of quickActions" 
+        class="quick-action-card"
+        [class]="'action-' + action.color"
+        (click)="navigateTo(action.route)"
+      >
+        <div class="action-icon">
+          <i [class]="action.icon"></i>
+        </div>
+        <div class="action-content">
+          <h4 class="action-title">{{ action.title }}</h4>
+          <p class="action-description">{{ action.description }}</p>
+        </div>
+        <div class="action-arrow">
+          <i class="bi bi-arrow-right"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="section">
+    <h2 class="section-title">
+      <i class="bi bi-clock-history me-2"></i>
+      Recent Activity
+    </h2>
+    <div class="recent-activity">
+      <div *ngFor="let item of recentItems" class="recent-item">
+        <div class="recent-icon" [class]="'recent-' + item.type">
+          <i [class]="item.type === 'book' ? 'bi-book' : 'bi-quote'"></i>
+        </div>
+        <div class="recent-content">
+          <h5 class="recent-title">{{ item.title }}</h5>
+          <p class="recent-author">by {{ item.author }}</p>
+        </div>
+        <div class="recent-date">{{ item.date }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tips & Inspiration -->
+  <div class="section">
+    <h2 class="section-title">
+      <i class="bi bi-lightbulb me-2"></i>
+      Daily Inspiration
+    </h2>
+    <div class="inspiration-card">
+      <div class="inspiration-quote">
+        <i class="bi bi-quote"></i>
+        <p>"The more that you read, the more things you will know. The more that you learn, the more places you'll go."</p>
+        <cite>— Dr. Seuss</cite>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="section">
+    <h2 class="section-title">
+      <i class="bi bi-graph-up me-2"></i>
+      Your Reading Journey
+    </h2>
+    <div class="journey-stats">
+      <div class="journey-item">
+        <div class="journey-icon">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <div class="journey-content">
+          <h4>Reading Streak</h4>
+          <p>7 days in a row</p>
+        </div>
+      </div>
+      
+      <div class="journey-item">
+        <div class="journey-icon">
+          <i class="bi bi-star-fill"></i>
+        </div>
+        <div class="journey-content">
+          <h4>Favorite Genre</h4>
+          <p>Fiction & Philosophy</p>
+        </div>
+      </div>
+      
+      <div class="journey-item">
+        <div class="journey-icon">
+          <i class="bi bi-trophy"></i>
+        </div>
+        <div class="journey-content">
+          <h4>Achievement</h4>
+          <p>Book Collector</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

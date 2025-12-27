@@ -1,0 +1,54 @@
+<div class="layout-container">
+  <nav class="navbar">
+    <div class="navbar-brand" (click)="navigateTo('dashboard')">
+      <span style="font-size: 1.5rem; font-weight: 600;"> NEST </span>
+    </div>
+    <div class="navbar-controls">
+      <button class="navbar-toggler" [class.active]="isNavbarCollapsed" (click)="toggleNavbar()">
+        <span *ngIf="!isNavbarCollapsed">&#9776;</span>
+        <span *ngIf="isNavbarCollapsed">&times;</span>
+      </button>
+
+      <div class="navbar-menu" [class.active]="isNavbarCollapsed">
+        <div class="navbar-links">
+          <button class="nav-button" (click)="navigateTo('dashboard')">Dashboard</button>
+          <div class="dropdown">
+            <button class="nav-button dropdown-toggle" (click)="toggleDropdown()">
+              Collections
+              <i class="bi bi-chevron-down" [class.rotated]="isDropdownOpen"></i>
+            </button>
+            <div class="dropdown-menu" [class.show]="isDropdownOpen">
+              <button class="dropdown-item" (click)="navigateTo('books'); closeDropdown()">
+                <i class="bi bi-book"></i> Books
+              </button>
+              <button class="dropdown-item" (click)="navigateTo('quotes'); closeDropdown()">
+                <i class="bi bi-quote"></i> Quotes
+              </button>
+              <button class="dropdown-item" (click)="navigateTo('movies'); closeDropdown()">
+                <i class="bi bi-film"></i> Movies
+              </button>
+              <button class="dropdown-item" (click)="navigateTo('diaries'); closeDropdown()">
+                <i class="bi bi-journal-text"></i> Diaries
+              </button>
+              <button class="dropdown-item" (click)="navigateTo('activities'); closeDropdown()">
+                <i class="bi bi-activity"></i> Activities
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <button class="theme-toggle-button" (click)="toggleTheme()" [title]="currentTheme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'">
+            <i class="bi" [class.bi-sun]="currentTheme === 'light'" [class.bi-moon]="currentTheme === 'dark'"></i>
+          </button>
+          <button class="layout-toggle-button" (click)="toggleLayout()" [title]="currentLayout === 'columns' ? 'Switch to Rows' : 'Switch to Columns'">
+            <i class="bi" [class.bi-list-ul]="currentLayout === 'columns'" [class.bi-grid-3x3-gap]="currentLayout === 'rows'"></i>
+          </button>
+          <button class="logout-button" (click)="logout()">Logout</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <div>
+    <router-outlet></router-outlet>
+  </div>
+</div>
