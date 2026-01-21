@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { map, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 // Small helper to decode JWT payload without external deps
 function decodeJwtPayload<T = unknown>(token: string): T | null {
   try {
@@ -26,7 +27,7 @@ function decodeJwtPayload<T = unknown>(token: string): T | null {
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = '/api';
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient, private router: Router) {} 
 

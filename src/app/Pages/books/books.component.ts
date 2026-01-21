@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { BookService } from '../../services/bookservice.service';
 import { Book } from '../../models/book';
 import { Router } from '@angular/router';
@@ -11,7 +12,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-books',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   providers: [],
   templateUrl: './books.component.html',
   styleUrl: './books.component.scss',
@@ -19,17 +20,6 @@ import { Subscription } from 'rxjs';
 export class BooksComponent implements OnInit, OnDestroy {
   books: Book[] = [];
   userId: number | null = null;  // Use null initially and after logout. Important to type as nullable and to use Number(localStorage.getItem('userId'))
-  newBookTitle: string = '';
-  newBookAuthor: string = '';
-  newBookDescription: string = '';
-  newBookPublicationYear: number | null = null;
-  newBookGenre: string = '';
-  newBookRating: string = '';
-  newBookPages: number | null = null;
-  newBookStatus: string = '';
-  newBookTags: string = '';
-  newBookNotes: string = '';
-  showAddForm: boolean = false;
   expandedBooks = new Set<number>();
   currentLayout: 'columns' | 'rows' = 'columns';
   private layoutSubscription?: Subscription;
@@ -46,6 +36,7 @@ export class BooksComponent implements OnInit, OnDestroy {
   editTags: string = '';
   editNotes: string = '';
   modalVisible: boolean = false;
+  deleteTarget: Book | null = null;
   private storageKey = 'books';
 
   // Add loading state
@@ -69,6 +60,7 @@ export class BooksComponent implements OnInit, OnDestroy {
     this.layoutSubscription = this.themeService.layout$.subscribe(layout => {
       this.currentLayout = layout;
     });
+
   }
 
   ngOnDestroy(): void {
@@ -171,75 +163,24 @@ export class BooksComponent implements OnInit, OnDestroy {
     });
   }
 
-  addBookInline(): void {
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      this.router.navigate(['/login']);
-      return;
+  requestDelete(book: Book, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
     }
-    // Validate required fields
-    if (!this.newBookTitle.trim()) {
-      alert('Please enter a book title');
-      return;
-    }
-    if (!this.newBookAuthor.trim()) {
-      alert('Please enter the author name');
-      return;
-    }
-    if (!this.newBookDescription.trim()) {
-      alert('Please enter a book description');
-      return;
-    }
-    const newBook: Book = {
-      id: 0,
-      title: this.newBookTitle.trim(),
-      author: this.newBookAuthor.trim(),
-      description: this.newBookDescription.trim(),
-      publicationYear: this.newBookPublicationYear ?? undefined,
-      genre: this.newBookGenre || undefined,
-      rating: this.newBookRating || undefined,
-      pages: this.newBookPages ?? undefined,
-      status: this.newBookStatus || undefined,
-      tags: this.newBookTags.trim() ? this.newBookTags.split(',').map(tag => tag.trim()) : undefined,
-      notes: this.newBookNotes || undefined,
-      userId: Number(userId)
-    };
-    console.log('Adding book with data:', newBook);
-    this.bookService.addBook(newBook).subscribe({
-      next: (book) => {
-        console.log('Book added successfully:', book);
-        // Server now handles tag parsing, but keep this as fallback
-        if (book.tags && typeof book.tags === 'string') {
-          const tagsString: string = book.tags;
-          try {
-            book.tags = JSON.parse(tagsString);
-          } catch (e) {
-            book.tags = tagsString.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0);
-          }
-        }
-        this.books = [book, ...this.books];
-        this.newBookTitle = '';
-        this.newBookAuthor = '';
-        this.newBookDescription = '';
-        this.newBookPublicationYear = null;
-        this.newBookGenre = '';
-        this.newBookRating = '';
-        this.newBookPages = null;
-        this.newBookStatus = '';
-        this.newBookTags = '';
-        this.newBookNotes = '';
-        this.showAddForm = false;
-      },
-      error: (error) => {
-        console.error('Error adding book:', error);
-        alert('Failed to add book. Please try again.');
-      }
-    });
+    this.deleteTarget = book;
   }
 
-  toggleAddForm(): void {
-    this.showAddForm = !this.showAddForm;
+  confirmDelete(): void {
+    if (!this.deleteTarget) return;
+    const bookId = this.deleteTarget.id;
+    this.deleteTarget = null;
+    this.deleteBook(bookId);
   }
+
+  cancelDelete(): void {
+    this.deleteTarget = null;
+  }
+
 
   editBook(id: number): void {
     const bookToEdit = this.books.find((book) => book.id === id);
@@ -325,10 +266,6 @@ export class BooksComponent implements OnInit, OnDestroy {
 
   private saveBooks(): void {
     localStorage.setItem(this.storageKey, JSON.stringify(this.books));
-  }
-
-  navigateToAddBook(): void {
-    this.toggleAddForm();
   }
 
   toggleCompactMode(): void {

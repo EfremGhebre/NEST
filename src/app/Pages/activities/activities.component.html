@@ -8,9 +8,9 @@
       </h1>
       <p class="page-subtitle">Track and manage your personal activities</p>
     </div>
-    <button class="add-button" (click)="toggleAddForm()">
+    <button class="add-button" routerLink="/layout/activities-new">
       <i class="bi bi-plus-circle"></i>
-      {{ showAddForm ? 'Close' : 'Add New Activity' }}
+      Add New Activity
     </button>
   </div>
 
@@ -55,88 +55,6 @@
     </div>
   </div>
 
-  <!-- Add Activity Form -->
-  <div class="add-form-section" *ngIf="showAddForm">
-    <div class="form-container">
-      <h3 class="form-title">
-        <i class="bi bi-plus-circle"></i>
-        Add New Activity
-      </h3>
-      <form class="activity-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Title</label>
-            <input class="form-input" type="text" [(ngModel)]="newTitle" name="title" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Category</label>
-            <select class="form-input" [(ngModel)]="newCategory" name="category" required>
-              <option value="">Select Category</option>
-              <option value="Work">Work</option>
-              <option value="Personal">Personal</option>
-              <option value="Health">Health</option>
-              <option value="Education">Education</option>
-              <option value="Hobby">Hobby</option>
-              <option value="Social">Social</option>
-              <option value="Travel">Travel</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Description</label>
-          <textarea class="form-textarea" [(ngModel)]="newDescription" name="description" rows="3" required placeholder="Describe your activity..."></textarea>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Date</label>
-            <input class="form-input" type="date" [(ngModel)]="newDate" name="date" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Duration (minutes)</label>
-            <input class="form-input" type="number" [(ngModel)]="newDuration" name="duration" min="1" placeholder="e.g., 60">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Status</label>
-            <select class="form-input" [(ngModel)]="newStatus" name="status" required>
-              <option value="">Select Status</option>
-              <option value="planned">Planned</option>
-              <option value="in-progress">In Progress</option>
-              <option value="completed">Completed</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Priority</label>
-            <select class="form-input" [(ngModel)]="newPriority" name="priority" required>
-              <option value="">Select Priority</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Location</label>
-          <input class="form-input" type="text" [(ngModel)]="newLocation" name="location" placeholder="Where will this take place?">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Tags</label>
-          <input class="form-input" type="text" [(ngModel)]="newTags" name="tags" placeholder="work, urgent, meeting (comma-separated)">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Notes</label>
-          <textarea class="form-textarea" [(ngModel)]="newNotes" name="notes" rows="2" placeholder="Additional notes or reminders..."></textarea>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn btn-secondary" (click)="toggleAddForm()">Cancel</button>
-          <button type="button" class="btn btn-primary" (click)="addActivity()">Add Activity</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-state">
     <div class="spinner"></div>
@@ -158,80 +76,89 @@
   </div>
 
   <!-- Activities Grid -->
-  <div *ngIf="!loading && !error && filteredActivities.length > 0" class="activities-grid" [class.rows-layout]="currentLayout === 'rows'">
+  <div *ngIf="!loading && !error && filteredActivities.length > 0" class="activities-grid content-grid" [class.rows-layout]="currentLayout === 'rows'">
     <div *ngFor="let activity of filteredActivities" 
          class="activity-card" 
          [class.expanded]="isActivityExpanded(activity.id)"
          (click)="toggleActivityExpansion(activity.id)">
-      <div class="activity-header">
-        <div class="activity-title-section">
-          <h3 class="activity-title">{{ activity.title }}</h3>
-          <div class="activity-meta">
-            <span class="activity-category">{{ activity.category }}</span>
-            <span class="activity-date">{{ formatDate(activity.date) }}</span>
-          </div>
-        </div>
-        <div class="activity-actions" (click)="$event.stopPropagation()">
-          <button class="action-button expand" 
-                  [title]="isActivityExpanded(activity.id) ? 'Collapse' : 'Expand'"
-                  (click)="toggleActivityExpansion(activity.id, $event)">
-            <i class="bi" [class.bi-chevron-down]="!isActivityExpanded(activity.id)" [class.bi-chevron-up]="isActivityExpanded(activity.id)"></i>
-          </button>
-          <button class="action-button edit" (click)="editActivity(activity)" title="Edit">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button class="action-button delete" (click)="deleteActivity(activity)" title="Delete">
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="activity-content">
-        <p class="activity-description" [class.truncated]="!isActivityExpanded(activity.id)">
-          {{ isActivityExpanded(activity.id) ? activity.description : truncateText(activity.description) }}
-        </p>
-        
-        <div class="activity-details">
-          <div class="detail-item">
-            <i class="bi bi-flag"></i>
-            <span class="status-badge" [class]="getStatusClass(activity.status)">
-              {{ activity.status.replace('-', ' ') }}
-            </span>
-          </div>
-          
-          <div class="detail-item">
-            <i class="bi bi-exclamation-circle"></i>
-            <span class="priority-badge" [class]="getPriorityClass(activity.priority)">
-              {{ activity.priority }}
-            </span>
-          </div>
-          
-          <div class="detail-item" *ngIf="activity.duration">
-            <i class="bi bi-clock"></i>
-            <span>{{ formatDuration(activity.duration) }}</span>
-          </div>
-          
-          <div class="detail-item" *ngIf="activity.location">
-            <i class="bi bi-geo-alt"></i>
-            <span>{{ activity.location }}</span>
-          </div>
+      <div class="activity-card-body">
+        <div class="activity-cover">
+          <i class="bi bi-activity"></i>
+          <span class="activity-cover-letter">{{ activity.title.charAt(0) }}</span>
         </div>
 
-        <!-- Expanded Content -->
-        <div class="activity-expanded-details" *ngIf="isActivityExpanded(activity.id)">
-          <div class="detail-row" *ngIf="activity.tags && activity.tags.length > 0">
+        <div class="activity-info">
+          <div class="activity-header">
+            <div class="activity-title-section">
+              <h3 class="activity-title">{{ activity.title }}</h3>
+              <div class="activity-meta">
+                <span class="activity-category">{{ activity.category }}</span>
+                <span class="activity-date">{{ formatDate(activity.date) }}</span>
+              </div>
+            </div>
+            <div class="activity-actions" (click)="$event.stopPropagation()">
+              <button class="action-button expand" 
+                      [title]="isActivityExpanded(activity.id) ? 'Collapse' : 'Expand'"
+                      (click)="toggleActivityExpansion(activity.id, $event)">
+                <i class="bi" [class.bi-chevron-down]="!isActivityExpanded(activity.id)" [class.bi-chevron-up]="isActivityExpanded(activity.id)"></i>
+              </button>
+              <button class="action-button edit" (click)="editActivity(activity)" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="action-button delete" (click)="requestDelete(activity, $event)" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="activity-summary">
+            <div class="activity-metrics" *ngIf="isActivityExpanded(activity.id)">
+              <span class="activity-metric">
+                <i class="bi bi-flag"></i>
+                <span class="status-badge" [class]="getStatusClass(activity.status)">
+                  {{ activity.status.replace('-', ' ') }}
+                </span>
+              </span>
+              
+              <span class="activity-metric">
+                <i class="bi bi-exclamation-circle"></i>
+                <span class="priority-badge" [class]="getPriorityClass(activity.priority)">
+                  {{ activity.priority }}
+                </span>
+              </span>
+              
+              <span class="activity-metric" *ngIf="activity.duration">
+                <i class="bi bi-clock"></i>
+                {{ formatDuration(activity.duration) }}
+              </span>
+              
+              <span class="activity-metric" *ngIf="activity.location">
+                <i class="bi bi-geo-alt"></i>
+                {{ activity.location }}
+              </span>
+            </div>
+          </div>
+
+          <div class="activity-description" *ngIf="isActivityExpanded(activity.id)">
+            <p>{{ activity.description }}</p>
+          </div>
+
+          <div class="activity-tags" *ngIf="isActivityExpanded(activity.id) && activity.tags && activity.tags.length > 0">
             <i class="bi bi-tags"></i>
-            <span class="detail-label">Tags:</span>
             <div class="tags-container">
               <span *ngFor="let tag of activity.tags" class="tag">{{ tag }}</span>
             </div>
           </div>
-          <div class="detail-row" *ngIf="activity.notes">
-            <i class="bi bi-sticky"></i>
-            <div class="notes-content">
-              <span class="detail-label">Notes:</span>
-              <p class="detail-value notes">{{ activity.notes }}</p>
-            </div>
+        </div>
+      </div>
+
+      <!-- Expanded Content -->
+      <div class="activity-expanded-details" *ngIf="isActivityExpanded(activity.id)">
+        <div class="detail-row" *ngIf="activity.notes">
+          <i class="bi bi-sticky"></i>
+          <div class="notes-content">
+            <span class="detail-label">Notes:</span>
+            <p class="detail-value notes">{{ activity.notes }}</p>
           </div>
         </div>
       </div>
@@ -307,6 +234,23 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
         <button class="btn btn-primary" (click)="saveEditedActivity()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal confirm-modal" *ngIf="deleteTarget">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Delete Activity</h3>
+        <button class="close-modal" (click)="cancelDelete()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete "<strong>{{ deleteTarget.title }}</strong>"? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer confirm-actions">
+        <button class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+        <button class="btn btn-danger" (click)="confirmDelete()">Delete</button>
       </div>
     </div>
   </div>

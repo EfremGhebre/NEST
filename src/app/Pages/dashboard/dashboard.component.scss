@@ -1,3 +1,5 @@
+/* Dashboard-specific styles only */
+
 .dashboard-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -20,16 +22,6 @@
   padding: 2rem;
   margin-bottom: 2rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-}
-
-/* Dark Theme Card Styles */
-body[data-theme="dark"] {
-  .welcome-section {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  }
 }
 
 .welcome-content {
@@ -82,33 +74,6 @@ body[data-theme="dark"] {
   transform: translateY(-4px);
   box-shadow: 0 8px 30px rgba(0,0,0,0.2);
   border-color: rgba(76, 175, 80, 0.3);
-}
-
-/* Dark Theme Card Styles */
-body[data-theme="dark"] {
-  .stat-card {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    backdrop-filter: blur(10px);
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.15) !important;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-      border-color: rgba(88, 24, 112, 0.4) !important;
-    }
-
-    .stat-number {
-      color: rgba(255, 255, 255, 0.95) !important;
-    }
-
-    .stat-label {
-      color: rgba(255, 255, 255, 0.8) !important;
-    }
-
-    .stat-icon {
-      background: linear-gradient(135deg, #581870, #9b0f45) !important;
-    }
-  }
 }
 
 .stat-icon {
@@ -192,41 +157,6 @@ body[data-theme="dark"] {
   border-color: rgba(76, 175, 80, 0.3);
 }
 
-/* Dark Theme Card Styles */
-body[data-theme="dark"] {
-  .quick-action-card {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    backdrop-filter: blur(10px);
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.15) !important;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-      border-color: rgba(88, 24, 112, 0.4) !important;
-    }
-
-    .action-title {
-      color: rgba(255, 255, 255, 0.95) !important;
-    }
-
-    .action-description {
-      color: rgba(255, 255, 255, 0.8) !important;
-    }
-
-    .action-arrow {
-      color: rgba(255, 255, 255, 0.7) !important;
-    }
-
-    &:hover .action-arrow {
-      color: rgba(88, 24, 112, 0.9) !important;
-    }
-
-    .action-icon {
-      background: linear-gradient(135deg, #581870, #9b0f45) !important;
-    }
-  }
-}
-
 .action-primary::before { background: var(--bnq-primary); }
 .action-success::before { background: var(--bnq-success); }
 .action-info::before { background: #17a2b8; }
@@ -284,32 +214,6 @@ body[data-theme="dark"] {
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
   border: 1px solid rgba(255,255,255,0.2);
-}
-
-/* Dark Theme Card Styles */
-body[data-theme="dark"] {
-  .recent-activity {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-
-    .recent-item {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-    }
-
-    .recent-title {
-      color: rgba(255, 255, 255, 0.95) !important;
-    }
-
-    .recent-author {
-      color: rgba(255, 255, 255, 0.8) !important;
-    }
-
-    .recent-date {
-      color: rgba(255, 255, 255, 0.7) !important;
-    }
-  }
 }
 
 .recent-item {
@@ -370,16 +274,6 @@ body[data-theme="dark"] {
   text-align: center;
 }
 
-/* Dark Theme Card Styles */
-body[data-theme="dark"] {
-  .inspiration-card {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  }
-}
-
 .inspiration-quote {
   color: white;
 }
@@ -426,34 +320,6 @@ body[data-theme="dark"] {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0,0,0,0.2);
   border-color: rgba(76, 175, 80, 0.3);
-}
-
-/* Dark Theme Card Styles */
-body[data-theme="dark"] {
-  .journey-item {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.15) !important;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-      border-color: rgba(88, 24, 112, 0.4) !important;
-    }
-
-    .journey-content h4 {
-      color: rgba(255, 255, 255, 0.95) !important;
-    }
-
-    .journey-content p {
-      color: rgba(255, 255, 255, 0.8) !important;
-    }
-
-    .journey-icon {
-      background: linear-gradient(135deg, #581870, #9b0f45) !important;
-    }
-  }
 }
 
 .journey-icon {

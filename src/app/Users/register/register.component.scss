@@ -1,13 +1,12 @@
-body {
+:host {
     font-family: 'Roboto', sans-serif;
-    margin: 0;
-    padding: 0;
     background: linear-gradient(to bottom, #4caf50, #1e88e5);
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    min-height: 100vh;
+    width: 100%;
   }
   
   .landing-container {
@@ -45,19 +44,73 @@ body {
   
   .auth-box {
     width: 100%;
-    max-width: 400px;
-    background: #ffffff;
-    color: #333;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    padding: 20px;
+    max-width: 420px;
+    background:
+      radial-gradient(120% 120% at 0% 0%, rgba(34, 197, 94, 0.22), transparent 55%),
+      radial-gradient(120% 120% at 100% 0%, rgba(59, 130, 246, 0.22), transparent 55%),
+      linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(224, 242, 254, 0.94));
+    color: #1f2937;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 24px 55px rgba(15, 23, 42, 0.32);
+    padding: 30px 28px;
+    backdrop-filter: blur(14px);
+  position: relative;
+  overflow: hidden;
   }
+
+.auth-box::before {
+  content: '';
+  position: absolute;
+  inset: -40% 30% auto -40%;
+  height: 160%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.0),
+    rgba(255, 255, 255, 0.25),
+    rgba(255, 255, 255, 0.0)
+  );
+  transform: translateX(-30%) rotate(-12deg);
+  opacity: 0.5;
+  pointer-events: none;
+  animation: authShimmer 6s ease-in-out infinite;
+}
+
+.auth-box::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  opacity: 0.6;
+  pointer-events: none;
+}
   
   .auth-title {
     text-align: center;
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-    color: #4caf50;
+    font-size: 1.6rem;
+    margin-bottom: 22px;
+    color: #1e8e5a;
+    letter-spacing: 0.3px;
+  }
+
+  .auth-box .form-label {
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .auth-box .form-control {
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    padding: 0.7rem 0.9rem;
+    font-size: 0.95rem;
+    background: rgba(248, 250, 252, 0.9);
+    transition: all 0.2s ease;
+  }
+
+  .auth-box .form-control:focus {
+    border-color: rgba(30, 142, 90, 0.7);
+    box-shadow: 0 0 0 3px rgba(30, 142, 90, 0.18);
   }
   
   p.text-center {
@@ -75,11 +128,21 @@ body {
   }
   
   .btn-success {
-    background-color: #4caf50;
-    border-color: #4caf50;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border: none;
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
   }
   
   .btn-success:hover {
-    background-color: #45a049;
+    background: linear-gradient(135deg, #16a34a, #15803d);
   }
+
+@keyframes authShimmer {
+  0% { transform: translateX(-40%) rotate(-12deg); opacity: 0.25; }
+  50% { transform: translateX(40%) rotate(-12deg); opacity: 0.5; }
+  100% { transform: translateX(120%) rotate(-12deg); opacity: 0.25; }
+}
   

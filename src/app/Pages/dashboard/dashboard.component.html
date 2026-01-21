@@ -88,7 +88,7 @@
         *ngFor="let action of quickActions" 
         class="quick-action-card"
         [class]="'action-' + action.color"
-        (click)="navigateTo(action.route)"
+        (click)="navigateTo(action)"
       >
         <div class="action-icon">
           <i [class]="action.icon"></i>
@@ -133,8 +133,8 @@
     <div class="inspiration-card">
       <div class="inspiration-quote">
         <i class="bi bi-quote"></i>
-        <p>"The more that you read, the more things you will know. The more that you learn, the more places you'll go."</p>
-        <cite>— Dr. Seuss</cite>
+        <p>"{{ currentInspiration.text }}"</p>
+        <cite>— {{ currentInspiration.author }}</cite>
       </div>
     </div>
   </div>

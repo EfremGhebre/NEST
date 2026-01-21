@@ -8,72 +8,10 @@
       </h1>
       <p class="page-subtitle">Collect and organize your favorite quotes</p>
     </div>
-    <button class="add-button" (click)="toggleAddForm()">
+    <button class="add-button" routerLink="/layout/quotes-new">
       <i class="bi bi-plus-circle"></i>
-      {{ showAddForm ? 'Close' : 'Add New Quote' }}
+      Add New Quote
     </button>
-  </div>
-
-  <!-- Add Quote Form -->
-  <div class="add-form-section" *ngIf="showAddForm">
-    <div class="form-container">
-      <h3 class="form-title">
-        <i class="bi bi-plus-circle"></i>
-        Add New Quote
-      </h3>
-      <form class="quote-form">
-        <div class="form-group">
-          <label class="form-label">Title</label>
-          <input class="form-input" type="text" [(ngModel)]="newQuoteTitle" name="title" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Quote</label>
-          <textarea class="form-textarea" [(ngModel)]="newQuoteDescription" name="description" rows="4" required placeholder="Enter the quote text..."></textarea>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Author</label>
-            <input class="form-input" type="text" [(ngModel)]="newQuoteAuthor" name="author" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Source</label>
-            <input class="form-input" type="text" [(ngModel)]="newQuoteSource" name="source" placeholder="Book, speech, interview, etc.">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Category</label>
-            <select class="form-input" [(ngModel)]="newQuoteCategory" name="category">
-              <option value="">Select Category</option>
-              <option value="Inspirational">Inspirational</option>
-              <option value="Motivational">Motivational</option>
-              <option value="Philosophical">Philosophical</option>
-              <option value="Humorous">Humorous</option>
-              <option value="Life Lessons">Life Lessons</option>
-              <option value="Success">Success</option>
-              <option value="Love">Love</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Date</label>
-            <input class="form-input" type="date" [(ngModel)]="newQuoteDate" name="date">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Tags</label>
-          <input class="form-input" type="text" [(ngModel)]="newQuoteTags" name="tags" placeholder="wisdom, success, motivation (comma-separated)">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Notes</label>
-          <textarea class="form-textarea" [(ngModel)]="newQuoteNotes" name="notes" rows="2" placeholder="Additional context or personal notes about this quote..."></textarea>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn btn-secondary" (click)="toggleAddForm()">Cancel</button>
-          <button type="button" class="btn btn-primary" (click)="addQuote()">Add Quote</button>
-        </div>
-      </form>
-    </div>
   </div>
 
   <!-- Loading State -->
@@ -97,74 +35,81 @@
   </div>
 
   <!-- Quotes Grid -->
-  <div *ngIf="!isLoading && !error && quotes.length > 0" class="quotes-grid" [class.rows-layout]="currentLayout === 'rows'">
+  <div *ngIf="!isLoading && !error && quotes.length > 0" class="quotes-grid content-grid" [class.rows-layout]="currentLayout === 'rows'">
     <div *ngFor="let quote of quotes" 
          class="quote-card" 
          [class.expanded]="isQuoteExpanded(quote.id)"
          (click)="toggleQuoteExpansion(quote.id)">
-      <div class="quote-header">
-        <div class="quote-title-section">
-          <h3 class="quote-title">{{ quote.title }}</h3>
-          <div class="quote-meta">
-            <span class="quote-type">Quote</span>
-            <span *ngIf="quote.category" class="quote-category">{{ quote.category }}</span>
-          </div>
-        </div>
-        <div class="quote-actions" (click)="$event.stopPropagation()">
-          <button class="action-button expand" 
-                  [title]="isQuoteExpanded(quote.id) ? 'Collapse' : 'Expand'"
-                  (click)="toggleQuoteExpansion(quote.id, $event)">
-            <i class="bi" [class.bi-chevron-down]="!isQuoteExpanded(quote.id)" [class.bi-chevron-up]="isQuoteExpanded(quote.id)"></i>
-          </button>
-          <button class="action-button edit" (click)="editQuote(quote.id)" title="Edit">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button class="action-button delete" (click)="deleteQuote(quote.id)" title="Delete">
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="quote-content">
-        <div class="quote-author">
-          <i class="bi bi-person"></i>
-          <span>{{ quote.author }}</span>
-        </div>
-        
-        <div class="quote-text">
-          <blockquote>
-            <i class="bi bi-quote"></i>
-            <p [class.truncated]="!isQuoteExpanded(quote.id)">
-              {{ isQuoteExpanded(quote.id) ? quote.description : truncateText(quote.description) }}
-            </p>
-          </blockquote>
+      <div class="quote-card-body">
+        <div class="quote-cover">
+          <i class="bi bi-quote"></i>
+          <span class="quote-cover-letter">{{ quote.title.charAt(0) }}</span>
         </div>
 
-        <!-- Expanded Content -->
-        <div class="quote-details" *ngIf="isQuoteExpanded(quote.id)">
-          <div class="detail-row" *ngIf="quote.source">
-            <i class="bi bi-book"></i>
-            <span class="detail-label">Source:</span>
-            <span class="detail-value">{{ quote.source }}</span>
+        <div class="quote-info">
+          <div class="quote-header">
+            <div class="quote-title-section">
+              <h3 class="quote-title">{{ quote.title }}</h3>
+              <div class="quote-meta">
+                <span class="quote-type">Quote</span>
+                <span *ngIf="quote.category" class="quote-category">{{ quote.category }}</span>
+              </div>
+            </div>
+            <div class="quote-actions" (click)="$event.stopPropagation()">
+              <button class="action-button expand" 
+                      [title]="isQuoteExpanded(quote.id) ? 'Collapse' : 'Expand'"
+                      (click)="toggleQuoteExpansion(quote.id, $event)">
+                <i class="bi" [class.bi-chevron-down]="!isQuoteExpanded(quote.id)" [class.bi-chevron-up]="isQuoteExpanded(quote.id)"></i>
+              </button>
+              <button class="action-button edit" (click)="editQuote(quote.id)" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="action-button delete" (click)="requestDelete(quote, $event)" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
           </div>
-          <div class="detail-row" *ngIf="quote.date">
-            <i class="bi bi-calendar"></i>
-            <span class="detail-label">Date:</span>
-            <span class="detail-value">{{ quote.date }}</span>
+
+          <div class="quote-summary">
+            <div class="quote-author">
+              <i class="bi bi-person"></i>
+              <span>{{ quote.author }}</span>
+            </div>
+            <div class="quote-metrics" *ngIf="isQuoteExpanded(quote.id)">
+              <span *ngIf="quote.source" class="quote-metric">
+                <i class="bi bi-book"></i>
+                {{ quote.source }}
+              </span>
+              <span *ngIf="quote.date" class="quote-metric">
+                <i class="bi bi-calendar3"></i>
+                {{ quote.date }}
+              </span>
+            </div>
           </div>
-          <div class="detail-row" *ngIf="quote.tags && quote.tags.length > 0">
+          
+          <div class="quote-text" *ngIf="isQuoteExpanded(quote.id)">
+            <blockquote>
+              <i class="bi bi-quote"></i>
+              <p>{{ quote.description }}</p>
+            </blockquote>
+          </div>
+
+          <div class="quote-tags" *ngIf="isQuoteExpanded(quote.id) && quote.tags && quote.tags.length > 0">
             <i class="bi bi-tags"></i>
-            <span class="detail-label">Tags:</span>
             <div class="tags-container">
               <span *ngFor="let tag of quote.tags" class="tag">{{ tag }}</span>
             </div>
           </div>
-          <div class="detail-row" *ngIf="quote.notes">
-            <i class="bi bi-sticky"></i>
-            <div class="notes-content">
-              <span class="detail-label">Notes:</span>
-              <p class="detail-value notes">{{ quote.notes }}</p>
-            </div>
+        </div>
+      </div>
+
+      <!-- Expanded Content -->
+      <div class="quote-details" *ngIf="isQuoteExpanded(quote.id)">
+        <div class="detail-row" *ngIf="quote.notes">
+          <i class="bi bi-sticky"></i>
+          <div class="notes-content">
+            <span class="detail-label">Notes:</span>
+            <p class="detail-value notes">{{ quote.notes }}</p>
           </div>
         </div>
       </div>
@@ -235,6 +180,23 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
         <button class="btn btn-primary" (click)="saveEditedQuote()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal confirm-modal" *ngIf="deleteTarget">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Delete Quote</h3>
+        <button class="close-modal" (click)="cancelDelete()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete "<strong>{{ deleteTarget.title }}</strong>"? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer confirm-actions">
+        <button class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+        <button class="btn btn-danger" (click)="confirmDelete()">Delete</button>
       </div>
     </div>
   </div>

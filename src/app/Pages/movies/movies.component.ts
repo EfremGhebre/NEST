@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { MovieService } from '../../services/movieservice.service';
 import { Movie } from '../../models/movie';
 import { ThemeService } from '../../services/theme.service';
+import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-movies',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './movies.component.html',
   styleUrls: ['./movies.component.scss']
 })
@@ -17,19 +18,10 @@ export class MoviesComponent implements OnInit, OnDestroy {
   movies: Movie[] = [];
   isLoading = false;
   error: string | null = null;
-  showAddForm = false;
   isCompactMode = false;
   expandedMovies = new Set<number>();
   currentLayout: 'columns' | 'rows' = 'columns';
   private layoutSubscription?: Subscription;
-
-  newTitle = '';
-  newDirector = '';
-  newDescription = '';
-  newReleaseYear: number | null = null;
-  newGenre = '';
-  newRating = '';
-  newNotes = '';
 
   editingId: number | null = null;
   editTitle = '';
@@ -40,6 +32,7 @@ export class MoviesComponent implements OnInit, OnDestroy {
   editRating = '';
   editNotes = '';
   modalVisible = false;
+  deleteTarget: Movie | null = null;
 
   constructor(
     private movieService: MovieService,
@@ -79,54 +72,9 @@ export class MoviesComponent implements OnInit, OnDestroy {
     });
   }
 
-  toggleAddForm(): void { this.showAddForm = !this.showAddForm; }
   toggleCompactMode(): void {
     this.isCompactMode = !this.isCompactMode;
     localStorage.setItem('bnq_view_movies', this.isCompactMode ? 'compact' : 'normal');
-  }
-
-  addMovie(): void {
-    const userId = localStorage.getItem('userId');
-    if (!userId) return;
-    // Validate required fields
-    if (!this.newTitle.trim()) {
-      alert('Please enter a movie title');
-      return;
-    }
-    if (!this.newDirector.trim()) {
-      alert('Please enter the director name');
-      return;
-    }
-    if (!this.newDescription.trim()) {
-      alert('Please enter a movie description');
-      return;
-    }
-    const movie: Movie = { 
-      id: 0, 
-      title: this.newTitle.trim(), 
-      director: this.newDirector.trim(), 
-      description: this.newDescription.trim(),
-      releaseYear: this.newReleaseYear ?? undefined,
-      genre: this.newGenre || undefined,
-      rating: this.newRating || undefined,
-      notes: this.newNotes || undefined,
-      userId: Number(userId) 
-    };
-    console.log('Adding movie with data:', movie);
-    this.movieService.addMovie(movie).subscribe({
-      next: (m) => {
-        console.log('Movie added successfully:', m);
-        this.movies.unshift(m);
-        this.newTitle = '';
-        this.newDirector = '';
-        this.newDescription = '';
-        this.newReleaseYear = null;
-        this.newGenre = '';
-        this.newRating = '';
-        this.newNotes = '';
-        this.showAddForm = false;
-      }
-    });
   }
 
   editMovie(id: number): void {
@@ -166,6 +114,24 @@ export class MoviesComponent implements OnInit, OnDestroy {
   deleteMovie(id: number): void {
     this.movies = this.movies.filter(m => m.id !== id);
     this.movieService.deleteMovie(id).subscribe({ error: () => this.loadMovies() });
+  }
+
+  requestDelete(movie: Movie, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.deleteTarget = movie;
+  }
+
+  confirmDelete(): void {
+    if (!this.deleteTarget) return;
+    const movieId = this.deleteTarget.id;
+    this.deleteTarget = null;
+    this.deleteMovie(movieId);
+  }
+
+  cancelDelete(): void {
+    this.deleteTarget = null;
   }
 
   closeModal(): void { 

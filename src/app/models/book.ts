@@ -11,6 +11,7 @@ export interface Book {
   status?: string;
   tags?: string[];
   notes?: string;
+  createdAt?: string;
 }
 
 

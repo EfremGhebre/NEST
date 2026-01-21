@@ -1,0 +1,79 @@
+<div class="add-book-container">
+  <div class="form-container">
+    <div class="form-header">
+      <h1 class="form-title">
+        <i class="bi bi-plus-circle"></i>
+        Add New Book
+      </h1>
+      <p class="form-subtitle">Build your library with a detailed book entry.</p>
+    </div>
+
+    <div *ngIf="error" class="error-message">
+      <i class="bi bi-exclamation-triangle"></i>
+      {{ error }}
+    </div>
+
+    <form class="book-form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-input" type="text" [(ngModel)]="title" name="title" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-textarea" [(ngModel)]="description" name="description" rows="3" required placeholder="Brief description of the book..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Author</label>
+          <input class="form-input" type="text" [(ngModel)]="author" name="author" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Publication Year</label>
+          <input class="form-input" type="number" [(ngModel)]="publicationYear" name="publicationYear" min="1000" max="2030" placeholder="e.g., 2023">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Genre</label>
+          <select class="form-input" [(ngModel)]="genre" name="genre">
+            <option value="">Select Genre</option>
+            <option *ngFor="let option of genres" [value]="option">{{ option }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rating</label>
+          <select class="form-input" [(ngModel)]="rating" name="rating">
+            <option value="">Select Rating</option>
+            <option *ngFor="let option of ratings" [value]="option">{{ option }} Star{{ option === '1' ? '' : 's' }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Pages</label>
+          <input class="form-input" type="number" [(ngModel)]="pages" name="pages" min="1" placeholder="Number of pages">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-input" [(ngModel)]="status" name="status">
+            <option value="">Select Status</option>
+            <option *ngFor="let option of statuses" [value]="option">{{ option }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags</label>
+        <input class="form-input" type="text" [(ngModel)]="tags" name="tags" placeholder="fiction, mystery, bestseller (comma-separated)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" [(ngModel)]="notes" name="notes" rows="2" placeholder="Personal notes or highlights..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading">Add Book</button>
+      </div>
+    </form>
+  </div>
+</div>
+

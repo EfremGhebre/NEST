@@ -1,0 +1,62 @@
+<div class="add-movie-container">
+  <div class="form-container">
+    <div class="form-header">
+      <h1 class="form-title">
+        <i class="bi bi-plus-circle"></i>
+        Add New Movie
+      </h1>
+      <p class="form-subtitle">Add a film and keep your movie collection tidy.</p>
+    </div>
+
+    <div *ngIf="error" class="error-message">
+      <i class="bi bi-exclamation-triangle"></i>
+      {{ error }}
+    </div>
+
+    <form class="movie-form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-input" type="text" [(ngModel)]="title" name="title" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-textarea" [(ngModel)]="description" name="description" rows="3" required placeholder="Brief description of the movie..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Director</label>
+          <input class="form-input" type="text" [(ngModel)]="director" name="director" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Release Year</label>
+          <input class="form-input" type="number" [(ngModel)]="releaseYear" name="releaseYear" min="1900" max="2030" placeholder="e.g., 2023">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Genre</label>
+          <select class="form-input" [(ngModel)]="genre" name="genre">
+            <option value="">Select Genre</option>
+            <option *ngFor="let option of genres" [value]="option">{{ option }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rating</label>
+          <select class="form-input" [(ngModel)]="rating" name="rating">
+            <option value="">Select Rating</option>
+            <option *ngFor="let option of ratings" [value]="option">{{ option }} Star{{ option === '1' ? '' : 's' }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" [(ngModel)]="notes" name="notes" rows="2" placeholder="Additional notes about the movie..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading">Add Movie</button>
+      </div>
+    </form>
+  </div>
+</div>
+

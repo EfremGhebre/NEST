@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { DiaryService } from '../../services/diaryservice.service';
 import { Diary } from '../../models/diary';
 import { ThemeService } from '../../services/theme.service';
+import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-diaries',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './diaries.component.html',
   styleUrls: ['./diaries.component.scss']
 })
@@ -17,21 +18,10 @@ export class DiariesComponent implements OnInit, OnDestroy {
   diaries: Diary[] = [];
   isLoading = false;
   error: string | null = null;
-  showAddForm = false;
   isCompactMode = false;
   expandedDiaries = new Set<number>();
   currentLayout: 'columns' | 'rows' = 'columns';
   private layoutSubscription?: Subscription;
-
-  newTitle = '';
-  newBody = '';
-  newDate = '';
-  newMood = '';
-  newWeather = '';
-  newLocation = '';
-  newTags = '';
-  newPrivateNotes = '';
-  addTimestamp: Date | null = null;
 
   editingId: number | null = null;
   editTitle = '';
@@ -43,6 +33,7 @@ export class DiariesComponent implements OnInit, OnDestroy {
   editTags = '';
   editPrivateNotes = '';
   modalVisible = false;
+  deleteTarget: Diary | null = null;
 
   constructor(
     private diaryService: DiaryService,
@@ -93,66 +84,9 @@ export class DiariesComponent implements OnInit, OnDestroy {
     });
   }
 
-  toggleAddForm(): void {
-    this.showAddForm = !this.showAddForm;
-    this.addTimestamp = this.showAddForm ? new Date() : null;
-  }
   toggleCompactMode(): void {
     this.isCompactMode = !this.isCompactMode;
     localStorage.setItem('bnq_view_diaries', this.isCompactMode ? 'compact' : 'normal');
-  }
-
-  addDiary(): void {
-    const userId = localStorage.getItem('userId');
-    if (!userId) return;
-    // Validate required fields
-    if (!this.newTitle.trim()) {
-      alert('Please enter a diary title');
-      return;
-    }
-    if (!this.newBody.trim()) {
-      alert('Please enter diary content');
-      return;
-    }
-    const diary: Diary = {
-      id: 0,
-      title: this.newTitle.trim(),
-      body: this.newBody.trim(),
-      date: this.newDate || undefined,
-      mood: this.newMood || undefined,
-      weather: this.newWeather || undefined,
-      location: this.newLocation || undefined,
-      tags: this.newTags.trim() ? this.newTags.split(',').map(tag => tag.trim()) : undefined,
-      privateNotes: this.newPrivateNotes || undefined,
-      userId: Number(userId),
-      createdAt: new Date().toISOString()
-    };
-    console.log('Adding diary with data:', diary);
-    this.diaryService.addDiary(diary).subscribe({
-      next: (d) => {
-        console.log('Diary added successfully:', d);
-        // Server now handles tag parsing, but keep this as fallback
-        if (d.tags && typeof d.tags === 'string') {
-          const tagsString: string = d.tags;
-          try {
-            d.tags = JSON.parse(tagsString);
-          } catch (e) {
-            d.tags = tagsString.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0);
-          }
-        }
-        this.diaries.unshift(d);
-        this.newTitle = '';
-        this.newBody = '';
-        this.newDate = '';
-        this.newMood = '';
-        this.newWeather = '';
-        this.newLocation = '';
-        this.newTags = '';
-        this.newPrivateNotes = '';
-        this.showAddForm = false;
-        this.addTimestamp = null;
-      }
-    });
   }
 
   editDiary(id: number): void {
@@ -203,6 +137,24 @@ export class DiariesComponent implements OnInit, OnDestroy {
   deleteDiary(id: number): void {
     this.diaries = this.diaries.filter(m => m.id !== id);
     this.diaryService.deleteDiary(id).subscribe({ error: () => this.loadDiaries() });
+  }
+
+  requestDelete(diary: Diary, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.deleteTarget = diary;
+  }
+
+  confirmDelete(): void {
+    if (!this.deleteTarget) return;
+    const diaryId = this.deleteTarget.id;
+    this.deleteTarget = null;
+    this.deleteDiary(diaryId);
+  }
+
+  cancelDelete(): void {
+    this.deleteTarget = null;
   }
 
   closeModal(): void { 

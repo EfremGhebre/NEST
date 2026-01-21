@@ -33,20 +33,8 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   editPriority: string = '';
   editTags: string = '';
   editNotes: string = '';
+  deleteTarget: Activity | null = null;
   
-  // Add form properties
-  showAddForm = false;
-  newTitle = '';
-  newDescription = '';
-  newCategory = '';
-  newDate = '';
-  newDuration: number | null = null;
-  newLocation = '';
-  newStatus = '';
-  newPriority = '';
-  newTags = '';
-  newNotes = '';
-
   // Filter options
   selectedCategory = 'all';
   selectedStatus = 'all';
@@ -144,56 +132,6 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  toggleAddForm(): void {
-    this.showAddForm = !this.showAddForm;
-  }
-
-  addActivity(): void {
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      this.router.navigate(['/login']);
-      return;
-    }
-    if (!(this.newTitle.trim() && this.newDescription.trim() && this.newCategory && this.newDate && this.newStatus && this.newPriority)) {
-      alert('Please fill in all required fields');
-      return;
-    }
-    const newActivity: Activity = {
-      id: 0,
-      title: this.newTitle.trim(),
-      description: this.newDescription.trim(),
-      category: this.newCategory,
-      date: this.newDate,
-      duration: this.newDuration || undefined,
-      location: this.newLocation || undefined,
-      status: this.newStatus as 'completed' | 'in-progress' | 'planned',
-      priority: this.newPriority as 'low' | 'medium' | 'high',
-      tags: this.newTags.trim() ? this.newTags.split(',').map(tag => tag.trim()) : undefined,
-      notes: this.newNotes || undefined,
-      userId: Number(userId)
-    };
-    this.activityService.createActivity(newActivity).subscribe({
-      next: (activity) => {
-        this.activities = [activity, ...this.activities];
-        this.applyFilters();
-        this.newTitle = '';
-        this.newDescription = '';
-        this.newCategory = '';
-        this.newDate = '';
-        this.newDuration = null;
-        this.newLocation = '';
-        this.newStatus = '';
-        this.newPriority = '';
-        this.newTags = '';
-        this.newNotes = '';
-        this.showAddForm = false;
-      },
-      error: (error) => {
-        console.error('Error adding activity:', error);
-        alert('Failed to add activity. Please try again.');
-      }
-    });
-  }
 
   editActivity(activity: Activity): void {
     this.editingActivityId = activity.id!;
@@ -211,17 +149,33 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   }
 
   deleteActivity(activity: Activity): void {
-    if (confirm(`Are you sure you want to delete "${activity.title}"?`)) {
-      this.activityService.deleteActivity(activity.id!).subscribe({
-        next: () => {
-          this.loadActivities();
-        },
-        error: (error) => {
-          console.error('Error deleting activity:', error);
-          alert('Failed to delete activity');
-        }
-      });
+    this.activityService.deleteActivity(activity.id!).subscribe({
+      next: () => {
+        this.loadActivities();
+      },
+      error: (error) => {
+        console.error('Error deleting activity:', error);
+        alert('Failed to delete activity');
+      }
+    });
+  }
+
+  requestDelete(activity: Activity, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
     }
+    this.deleteTarget = activity;
+  }
+
+  confirmDelete(): void {
+    if (!this.deleteTarget) return;
+    const target = this.deleteTarget;
+    this.deleteTarget = null;
+    this.deleteActivity(target);
+  }
+
+  cancelDelete(): void {
+    this.deleteTarget = null;
   }
 
   getStatusClass(status: string): string {

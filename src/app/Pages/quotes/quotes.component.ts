@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { QuoteserviceService } from '../../services/quoteservice.service';
@@ -10,7 +10,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-quotes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './quotes.component.html',
   styleUrls: ['./quotes.component.scss'],
   providers: []
@@ -30,16 +30,7 @@ export class QuotesComponent implements OnInit, OnDestroy {
   editTags = '';
   editNotes = '';
   modalVisible = false;
-
-  newQuoteTitle = '';
-  newQuoteAuthor = '';
-  newQuoteDescription = '';
-  newQuoteSource = '';
-  newQuoteCategory = '';
-  newQuoteDate = '';
-  newQuoteTags = '';
-  newQuoteNotes = '';
-  showAddForm = false;
+  deleteTarget: Quote | null = null;
   isCompactMode = false;
   expandedQuotes = new Set<number>();
   currentLayout: 'columns' | 'rows' = 'columns';
@@ -105,69 +96,6 @@ export class QuotesComponent implements OnInit, OnDestroy {
     });
   }
 
-  navigateToAddQuote(): void {
-    // Not a separate page; mimic books add inline
-    this.addQuote();
-  }
-
-  addQuote(): void {
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      this.router.navigate(['/login']);
-      return;
-    }
-    // Validate required fields
-    if (!this.newQuoteTitle.trim()) {
-      alert('Please enter a quote title');
-      return;
-    }
-    if (!this.newQuoteAuthor.trim()) {
-      alert('Please enter the author name');
-      return;
-    }
-    if (!this.newQuoteDescription.trim()) {
-      alert('Please enter a quote description');
-      return;
-    }
-    const newQuote: Quote = {
-      id: 0,
-      title: this.newQuoteTitle.trim(),
-      author: this.newQuoteAuthor.trim(),
-      description: this.newQuoteDescription.trim(),
-      source: this.newQuoteSource || undefined,
-      category: this.newQuoteCategory || undefined,
-      date: this.newQuoteDate || undefined,
-      tags: this.newQuoteTags.trim() ? this.newQuoteTags.split(',').map(tag => tag.trim()) : undefined,
-      notes: this.newQuoteNotes || undefined,
-      userId: Number(userId)
-    };
-    console.log('Adding quote with data:', newQuote);
-    this.quoteService.addQuote(newQuote).subscribe({
-      next: (quote) => {
-        console.log('Quote added successfully:', quote);
-        // Server now handles tag parsing, but keep this as fallback
-        if (quote.tags && typeof quote.tags === 'string') {
-          const tagsString: string = quote.tags;
-          try {
-            quote.tags = JSON.parse(tagsString);
-          } catch (e) {
-            quote.tags = tagsString.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0);
-          }
-        }
-        this.quotes.push(quote);
-        this.newQuoteTitle = '';
-        this.newQuoteAuthor = '';
-        this.newQuoteDescription = '';
-        this.newQuoteSource = '';
-        this.newQuoteCategory = '';
-        this.newQuoteDate = '';
-        this.newQuoteTags = '';
-        this.newQuoteNotes = '';
-        this.showAddForm = false;
-      },
-      error: () => alert('Failed to add quote. Please try again.')
-    });
-  }
 
   editQuote(id: number): void {
     const quoteToEdit = this.quotes.find((q) => q.id === id);
@@ -223,6 +151,24 @@ export class QuotesComponent implements OnInit, OnDestroy {
     });
   }
 
+  requestDelete(quote: Quote, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.deleteTarget = quote;
+  }
+
+  confirmDelete(): void {
+    if (!this.deleteTarget) return;
+    const quoteId = this.deleteTarget.id;
+    this.deleteTarget = null;
+    this.deleteQuote(quoteId);
+  }
+
+  cancelDelete(): void {
+    this.deleteTarget = null;
+  }
+
   openModal(): void { this.modalVisible = true; }
   closeModal(): void {
     this.modalVisible = false;
@@ -235,10 +181,6 @@ export class QuotesComponent implements OnInit, OnDestroy {
     this.editDate = '';
     this.editTags = '';
     this.editNotes = '';
-  }
-
-  toggleAddForm(): void {
-    this.showAddForm = !this.showAddForm;
   }
 
   toggleCompactMode(): void {

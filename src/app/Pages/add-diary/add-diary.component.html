@@ -1,0 +1,66 @@
+<div class="add-diary-container">
+  <div class="form-container">
+    <div class="form-header">
+      <h1 class="form-title">
+        <i class="bi bi-plus-circle"></i>
+        Add New Diary Entry
+      </h1>
+      <p class="form-subtitle">Capture a moment and keep it safe.</p>
+    </div>
+
+    <div *ngIf="error" class="error-message">
+      <i class="bi bi-exclamation-triangle"></i>
+      {{ error }}
+    </div>
+
+    <form class="diary-form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-input" type="text" [(ngModel)]="title" name="title" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Entry</label>
+        <textarea class="form-textarea" [(ngModel)]="body" name="body" rows="6" required placeholder="Write your diary entry here..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-input" type="date" [(ngModel)]="date" name="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mood</label>
+          <select class="form-input" [(ngModel)]="mood" name="mood">
+            <option value="">Select Mood</option>
+            <option *ngFor="let option of moods" [value]="option">{{ option }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Weather</label>
+          <select class="form-input" [(ngModel)]="weather" name="weather">
+            <option value="">Select Weather</option>
+            <option *ngFor="let option of weathers" [value]="option">{{ option }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input class="form-input" type="text" [(ngModel)]="location" name="location" placeholder="Where are you writing from?">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags</label>
+        <input class="form-input" type="text" [(ngModel)]="tags" name="tags" placeholder="work, family, travel, reflection (comma-separated)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Private Notes</label>
+        <textarea class="form-textarea" [(ngModel)]="privateNotes" name="privateNotes" rows="2" placeholder="Additional private thoughts or reminders..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading">Add Entry</button>
+      </div>
+    </form>
+  </div>
+</div>
+

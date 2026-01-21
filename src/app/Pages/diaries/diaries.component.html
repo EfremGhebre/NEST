@@ -8,83 +8,10 @@
       </h1>
       <p class="page-subtitle">Capture your thoughts and memories</p>
     </div>
-    <button class="add-button" (click)="toggleAddForm()">
+    <button class="add-button" routerLink="/layout/diaries-new">
       <i class="bi bi-plus-circle"></i>
-      {{ showAddForm ? 'Close' : 'Add New Diary' }}
+      Add New Diary
     </button>
-  </div>
-
-  <!-- Add Diary Form -->
-  <div class="add-form-section" *ngIf="showAddForm">
-    <div class="form-container">
-      <h3 class="form-title">
-        <i class="bi bi-plus-circle"></i>
-        Add New Diary Entry
-      </h3>
-      <form class="diary-form">
-        <div class="form-group">
-          <label class="form-label">Title</label>
-          <input class="form-input" type="text" [(ngModel)]="newTitle" name="title" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Entry</label>
-          <textarea class="form-textarea" [(ngModel)]="newBody" name="body" rows="6" required placeholder="Write your diary entry here..."></textarea>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Date</label>
-            <input class="form-input" type="date" [(ngModel)]="newDate" name="date" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Mood</label>
-            <select class="form-input" [(ngModel)]="newMood" name="mood">
-              <option value="">Select Mood</option>
-              <option value="😊 Happy">😊 Happy</option>
-              <option value="😢 Sad">😢 Sad</option>
-              <option value="😌 Calm">😌 Calm</option>
-              <option value="😤 Angry">😤 Angry</option>
-              <option value="😰 Anxious">😰 Anxious</option>
-              <option value="🤔 Thoughtful">🤔 Thoughtful</option>
-              <option value="😴 Tired">😴 Tired</option>
-              <option value="🎉 Excited">🎉 Excited</option>
-              <option value="😔 Melancholy">😔 Melancholy</option>
-              <option value="😌 Content">😌 Content</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Weather</label>
-            <select class="form-input" [(ngModel)]="newWeather" name="weather">
-              <option value="">Select Weather</option>
-              <option value="☀️ Sunny">☀️ Sunny</option>
-              <option value="⛅ Partly Cloudy">⛅ Partly Cloudy</option>
-              <option value="☁️ Cloudy">☁️ Cloudy</option>
-              <option value="🌧️ Rainy">🌧️ Rainy</option>
-              <option value="⛈️ Stormy">⛈️ Stormy</option>
-              <option value="❄️ Snowy">❄️ Snowy</option>
-              <option value="🌤️ Clear">🌤️ Clear</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Location</label>
-            <input class="form-input" type="text" [(ngModel)]="newLocation" name="location" placeholder="Where are you writing from?">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Tags</label>
-          <input class="form-input" type="text" [(ngModel)]="newTags" name="tags" placeholder="work, family, travel, reflection (comma-separated)">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Private Notes</label>
-          <textarea class="form-textarea" [(ngModel)]="newPrivateNotes" name="privateNotes" rows="2" placeholder="Additional private thoughts or reminders..."></textarea>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn btn-secondary" (click)="toggleAddForm()">Cancel</button>
-          <button type="button" class="btn btn-primary" (click)="addDiary()">Add Entry</button>
-        </div>
-      </form>
-    </div>
   </div>
 
   <!-- Loading State -->
@@ -108,79 +35,85 @@
   </div>
 
   <!-- Diaries Grid -->
-  <div *ngIf="!isLoading && !error && diaries.length > 0" class="diaries-grid" [class.rows-layout]="currentLayout === 'rows'">
+  <div *ngIf="!isLoading && !error && diaries.length > 0" class="diaries-grid content-grid" [class.rows-layout]="currentLayout === 'rows'">
     <div *ngFor="let diary of diaries" 
          class="diary-card" 
          [class.expanded]="isDiaryExpanded(diary.id)"
          (click)="toggleDiaryExpansion(diary.id)">
-      <div class="diary-header">
-        <div class="diary-title-section">
-          <h3 class="diary-title">{{ diary.title }}</h3>
-          <div class="diary-meta">
-            <span class="diary-type">Diary</span>
-            <span class="diary-date" *ngIf="diary.createdAt">
-              <i class="bi bi-clock"></i>
-              {{ diary.createdAt | date:'medium' }}
-            </span>
-          </div>
-        </div>
-        <div class="diary-actions" (click)="$event.stopPropagation()">
-          <button class="action-button expand" 
-                  [title]="isDiaryExpanded(diary.id) ? 'Collapse' : 'Expand'"
-                  (click)="toggleDiaryExpansion(diary.id, $event)">
-            <i class="bi" [class.bi-chevron-down]="!isDiaryExpanded(diary.id)" [class.bi-chevron-up]="isDiaryExpanded(diary.id)"></i>
-          </button>
-          <button class="action-button edit" (click)="editDiary(diary.id)" title="Edit">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button class="action-button delete" (click)="deleteDiary(diary.id)" title="Delete">
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="diary-content">
-        <div class="diary-body">
-          <p [class.truncated]="!isDiaryExpanded(diary.id)">
-            {{ isDiaryExpanded(diary.id) ? diary.body : truncateText(diary.body) }}
-          </p>
+      <div class="diary-card-body">
+        <div class="diary-cover">
+          <i class="bi bi-journal-text"></i>
+          <span class="diary-cover-letter">{{ diary.title.charAt(0) }}</span>
         </div>
 
-        <!-- Expanded Content -->
-        <div class="diary-details" *ngIf="isDiaryExpanded(diary.id)">
-          <div class="detail-row" *ngIf="diary.date">
-            <i class="bi bi-calendar"></i>
-            <span class="detail-label">Date:</span>
-            <span class="detail-value">{{ diary.date }}</span>
+        <div class="diary-info">
+          <div class="diary-header">
+            <div class="diary-title-section">
+              <h3 class="diary-title">{{ diary.title }}</h3>
+              <div class="diary-meta">
+                <span class="diary-type">Diary</span>
+                <span class="diary-date" *ngIf="diary.createdAt">
+                  <i class="bi bi-clock"></i>
+                  {{ diary.createdAt | date:'medium' }}
+                </span>
+              </div>
+            </div>
+            <div class="diary-actions" (click)="$event.stopPropagation()">
+              <button class="action-button expand" 
+                      [title]="isDiaryExpanded(diary.id) ? 'Collapse' : 'Expand'"
+                      (click)="toggleDiaryExpansion(diary.id, $event)">
+                <i class="bi" [class.bi-chevron-down]="!isDiaryExpanded(diary.id)" [class.bi-chevron-up]="isDiaryExpanded(diary.id)"></i>
+              </button>
+              <button class="action-button edit" (click)="editDiary(diary.id)" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="action-button delete" (click)="requestDelete(diary, $event)" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
           </div>
-          <div class="detail-row" *ngIf="diary.mood">
-            <i class="bi bi-emoji-smile"></i>
-            <span class="detail-label">Mood:</span>
-            <span class="detail-value">{{ diary.mood }}</span>
+
+          <div class="diary-summary">
+            <div class="diary-metrics" *ngIf="isDiaryExpanded(diary.id)">
+              <span *ngIf="diary.date" class="diary-metric">
+                <i class="bi bi-calendar3"></i>
+                {{ diary.date }}
+              </span>
+              <span *ngIf="diary.mood" class="diary-metric">
+                <i class="bi bi-emoji-smile"></i>
+                {{ diary.mood }}
+              </span>
+              <span *ngIf="diary.weather" class="diary-metric">
+                <i class="bi bi-cloud"></i>
+                {{ diary.weather }}
+              </span>
+              <span *ngIf="diary.location" class="diary-metric">
+                <i class="bi bi-geo-alt"></i>
+                {{ diary.location }}
+              </span>
+            </div>
           </div>
-          <div class="detail-row" *ngIf="diary.weather">
-            <i class="bi bi-cloud"></i>
-            <span class="detail-label">Weather:</span>
-            <span class="detail-value">{{ diary.weather }}</span>
+
+          <div class="diary-body" *ngIf="isDiaryExpanded(diary.id)">
+            <p>{{ diary.body }}</p>
           </div>
-          <div class="detail-row" *ngIf="diary.location">
-            <i class="bi bi-geo-alt"></i>
-            <span class="detail-label">Location:</span>
-            <span class="detail-value">{{ diary.location }}</span>
-          </div>
-          <div class="detail-row" *ngIf="diary.tags && diary.tags.length > 0">
+
+          <div class="diary-tags" *ngIf="isDiaryExpanded(diary.id) && diary.tags && diary.tags.length > 0">
             <i class="bi bi-tags"></i>
-            <span class="detail-label">Tags:</span>
             <div class="tags-container">
               <span *ngFor="let tag of diary.tags" class="tag">{{ tag }}</span>
             </div>
           </div>
-          <div class="detail-row" *ngIf="diary.privateNotes">
-            <i class="bi bi-lock"></i>
-            <div class="notes-content">
-              <span class="detail-label">Private Notes:</span>
-              <p class="detail-value notes">{{ diary.privateNotes }}</p>
-            </div>
+        </div>
+      </div>
+
+      <!-- Expanded Content -->
+      <div class="diary-details" *ngIf="isDiaryExpanded(diary.id)">
+        <div class="detail-row" *ngIf="diary.privateNotes">
+          <i class="bi bi-lock"></i>
+          <div class="notes-content">
+            <span class="detail-label">Private Notes:</span>
+            <p class="detail-value notes">{{ diary.privateNotes }}</p>
           </div>
         </div>
       </div>
@@ -261,6 +194,23 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
         <button class="btn btn-primary" (click)="saveEditedDiary()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal confirm-modal" *ngIf="deleteTarget">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Delete Diary Entry</h3>
+        <button class="close-modal" (click)="cancelDelete()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete "<strong>{{ deleteTarget.title }}</strong>"? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer confirm-actions">
+        <button class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+        <button class="btn btn-danger" (click)="confirmDelete()">Delete</button>
       </div>
     </div>
   </div>

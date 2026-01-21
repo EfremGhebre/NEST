@@ -1,0 +1,63 @@
+<div class="add-quote-container">
+  <div class="form-container">
+    <div class="form-header">
+      <h1 class="form-title">
+        <i class="bi bi-plus-circle"></i>
+        Add New Quote
+      </h1>
+      <p class="form-subtitle">Capture a memorable quote and keep it organized.</p>
+    </div>
+
+    <div *ngIf="error" class="error-message">
+      <i class="bi bi-exclamation-triangle"></i>
+      {{ error }}
+    </div>
+
+    <form class="quote-form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-input" type="text" [(ngModel)]="title" name="title" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quote</label>
+        <textarea class="form-textarea" [(ngModel)]="description" name="description" rows="4" required placeholder="Enter the quote text..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Author</label>
+          <input class="form-input" type="text" [(ngModel)]="author" name="author" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Source</label>
+          <input class="form-input" type="text" [(ngModel)]="source" name="source" placeholder="Book, speech, interview, etc.">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-input" [(ngModel)]="category" name="category">
+            <option value="">Select Category</option>
+            <option *ngFor="let option of categories" [value]="option">{{ option }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-input" type="date" [(ngModel)]="date" name="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags</label>
+        <input class="form-input" type="text" [(ngModel)]="tags" name="tags" placeholder="wisdom, success, motivation (comma-separated)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" [(ngModel)]="notes" name="notes" rows="2" placeholder="Additional context or personal notes about this quote..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading">Add Quote</button>
+      </div>
+    </form>
+  </div>
+</div>
+

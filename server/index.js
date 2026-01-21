@@ -118,6 +118,7 @@ ensureColumn('books', 'pages', 'INTEGER');
 ensureColumn('books', 'status', 'TEXT');
 ensureColumn('books', 'tags', 'TEXT');
 ensureColumn('books', 'notes', 'TEXT');
+ensureColumn('books', 'createdAt', 'TEXT');
 
 // Ensure createdAt column exists on diaries (SQLite lacks IF NOT EXISTS for columns)
 try {
@@ -162,6 +163,7 @@ function processBook(book) {
     pages: book.pages !== undefined ? book.pages : null,
     status: book.status !== undefined ? book.status : null,
     notes: book.notes !== undefined ? book.notes : null,
+    createdAt: book.createdAt !== undefined ? book.createdAt : null,
     tags: null
   };
   // Parse tags from JSON string to array
@@ -308,12 +310,12 @@ app.post('/api/users/login', (req, res) => {
 app.get('/api/users/:userId/books', authMiddleware, (req, res) => {
   const { userId } = req.params;
   if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
-  const rows = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, userId FROM books WHERE userId = ?').all(userId);
+  const rows = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, createdAt, userId FROM books WHERE userId = ?').all(userId);
   return res.json(processBooks(rows));
 });
 
 app.get('/api/books', authMiddleware, (req, res) => {
-  const rows = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, userId FROM books').all();
+  const rows = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, createdAt, userId FROM books').all();
   return res.json(processBooks(rows));
 });
 
@@ -329,7 +331,8 @@ app.post('/api/users/:userId/books', authMiddleware, (req, res) => {
   console.log('Tags JSON:', tagsJson);
   
   // Preserve empty strings, but convert undefined to null
-  const info = db.prepare('INSERT INTO books (title, author, description, publicationYear, genre, rating, pages, status, tags, notes, userId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+  const createdAt = new Date().toISOString();
+  const info = db.prepare('INSERT INTO books (title, author, description, publicationYear, genre, rating, pages, status, tags, notes, userId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
     .run(
       title, 
       author, 
@@ -341,10 +344,11 @@ app.post('/api/users/:userId/books', authMiddleware, (req, res) => {
       status !== undefined && status !== '' ? status : null,
       tagsJson,
       notes !== undefined && notes !== '' ? notes : null,
-      userId
+      userId,
+      createdAt
     );
   // Explicitly select all columns to ensure they're included
-  const book = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, userId FROM books WHERE id = ?').get(info.lastInsertRowid);
+  const book = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, createdAt, userId FROM books WHERE id = ?').get(info.lastInsertRowid);
   console.log('Raw book from database:', book);
   console.log('Book columns:', Object.keys(book || {}));
   const processed = processBook(book);
@@ -355,7 +359,7 @@ app.post('/api/users/:userId/books', authMiddleware, (req, res) => {
 app.put('/api/books/:id', authMiddleware, (req, res) => {
   const { id } = req.params;
   const { title, author, description, publicationYear, genre, rating, pages, status, tags, notes } = req.body;
-  const existing = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, userId FROM books WHERE id = ?').get(id);
+  const existing = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, createdAt, userId FROM books WHERE id = ?').get(id);
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
@@ -374,7 +378,7 @@ app.put('/api/books/:id', authMiddleware, (req, res) => {
       notes !== undefined && notes !== '' ? notes : (notes === '' ? null : existing.notes),
       id
     );
-  const updated = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, userId FROM books WHERE id = ?').get(id);
+  const updated = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, createdAt, userId FROM books WHERE id = ?').get(id);
   return res.json(processBook(updated));
 });
 

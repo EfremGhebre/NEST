@@ -3,12 +3,13 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Quote } from '../models/quote';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class QuoteserviceService {
-  private apiUrl = '/api';
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) { }
 
