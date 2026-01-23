@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://YOUR-RENDER-URL.onrender.com/api'
+  apiUrl: 'https://nest-odyj.onrender.com/api'
 };
 
