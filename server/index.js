@@ -2,134 +2,130 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const Database = require('better-sqlite3');
+const { Pool } = require('pg');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || process.env.API_PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
-const DB_PATH = process.env.DB_PATH || 'bnq.db';
+const DATABASE_URL = process.env.DATABASE_URL;
 
 app.use(cors());
 app.use(express.json());
 
-// Initialize DB (file-based for persistence in dev)
-const db = new Database(DB_PATH);
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT UNIQUE NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  passwordHash TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS books (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
-  author TEXT NOT NULL,
-  description TEXT NOT NULL,
-  userId INTEGER NOT NULL,
-  FOREIGN KEY(userId) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS quotes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
-  author TEXT NOT NULL,
-  description TEXT NOT NULL,
-  userId INTEGER NOT NULL,
-  FOREIGN KEY(userId) REFERENCES users(id)
-);
- 
-CREATE TABLE IF NOT EXISTS movies (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
-  director TEXT NOT NULL,
-  description TEXT NOT NULL,
-  userId INTEGER NOT NULL,
-  FOREIGN KEY(userId) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS diaries (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
-  body TEXT NOT NULL,
-  userId INTEGER NOT NULL,
-  createdAt TEXT,
-  FOREIGN KEY(userId) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS activities (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  category TEXT NOT NULL,
-  date TEXT NOT NULL,
-  duration INTEGER,
-  location TEXT,
-  status TEXT NOT NULL,
-  priority TEXT NOT NULL,
-  tags TEXT,
-  notes TEXT,
-  userId INTEGER NOT NULL,
-  createdAt TEXT,
-  updatedAt TEXT,
-  FOREIGN KEY(userId) REFERENCES users(id)
-);
-`);
-
-// Safe column adder: only add if the column does not exist
-function ensureColumn(table, column, type) {
-  try {
-    const cols = db.prepare(`PRAGMA table_info(${table})`).all();
-    const exists = cols.some(c => c.name === column);
-    if (!exists) {
-      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
-    }
-  } catch (e) {
-    // Log but don't crash the server on first boot
-    console.warn(`Column check/add failed for ${table}.${column}:`, e.message);
-  }
+if (!DATABASE_URL) {
+  console.warn('DATABASE_URL is not set. Configure it with your Supabase Postgres URL.');
 }
 
-// Add new columns to existing tables for enhanced functionality
-ensureColumn('quotes', 'source', 'TEXT');
-ensureColumn('quotes', 'category', 'TEXT');
-ensureColumn('quotes', 'date', 'TEXT');
-ensureColumn('quotes', 'tags', 'TEXT');
-ensureColumn('quotes', 'notes', 'TEXT');
+const ssl = DATABASE_URL && (DATABASE_URL.includes('supabase.co') || DATABASE_URL.includes('sslmode=require'))
+  ? { rejectUnauthorized: false }
+  : undefined;
 
-ensureColumn('movies', 'releaseYear', 'INTEGER');
-ensureColumn('movies', 'genre', 'TEXT');
-ensureColumn('movies', 'rating', 'TEXT');
-ensureColumn('movies', 'notes', 'TEXT');
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl
+});
 
-ensureColumn('diaries', 'date', 'TEXT');
-ensureColumn('diaries', 'mood', 'TEXT');
-ensureColumn('diaries', 'weather', 'TEXT');
-ensureColumn('diaries', 'location', 'TEXT');
-ensureColumn('diaries', 'tags', 'TEXT');
-ensureColumn('diaries', 'privateNotes', 'TEXT');
+async function ensureColumn(table, column, type) {
+  await pool.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} ${type}`);
+}
 
-ensureColumn('books', 'publicationYear', 'INTEGER');
-ensureColumn('books', 'genre', 'TEXT');
-ensureColumn('books', 'rating', 'TEXT');
-ensureColumn('books', 'pages', 'INTEGER');
-ensureColumn('books', 'status', 'TEXT');
-ensureColumn('books', 'tags', 'TEXT');
-ensureColumn('books', 'notes', 'TEXT');
-ensureColumn('books', 'createdAt', 'TEXT');
+async function initDb() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      "passwordHash" TEXT NOT NULL
+    );
+  `);
 
-// Ensure createdAt column exists on diaries (SQLite lacks IF NOT EXISTS for columns)
-try {
-  const diaryColumns = db.prepare("PRAGMA table_info(diaries)").all();
-  const hasCreatedAt = diaryColumns.some(c => c.name === 'createdAt');
-  if (!hasCreatedAt) {
-    db.exec("ALTER TABLE diaries ADD COLUMN createdAt TEXT");
-  }
-} catch (e) {
-  // swallow; table may be mid-migration on first run
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS books (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      author TEXT NOT NULL,
+      description TEXT NOT NULL,
+      "userId" INTEGER NOT NULL REFERENCES users(id)
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS quotes (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      author TEXT NOT NULL,
+      description TEXT NOT NULL,
+      "userId" INTEGER NOT NULL REFERENCES users(id)
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS movies (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      director TEXT NOT NULL,
+      description TEXT NOT NULL,
+      "userId" INTEGER NOT NULL REFERENCES users(id)
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS diaries (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      "userId" INTEGER NOT NULL REFERENCES users(id),
+      "createdAt" TEXT
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS activities (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      category TEXT NOT NULL,
+      date TEXT NOT NULL,
+      duration INTEGER,
+      location TEXT,
+      status TEXT NOT NULL,
+      priority TEXT NOT NULL,
+      tags TEXT,
+      notes TEXT,
+      "userId" INTEGER NOT NULL REFERENCES users(id),
+      "createdAt" TEXT,
+      "updatedAt" TEXT
+    );
+  `);
+
+  await ensureColumn('quotes', '"source"', 'TEXT');
+  await ensureColumn('quotes', '"category"', 'TEXT');
+  await ensureColumn('quotes', '"date"', 'TEXT');
+  await ensureColumn('quotes', '"tags"', 'TEXT');
+  await ensureColumn('quotes', '"notes"', 'TEXT');
+
+  await ensureColumn('movies', '"releaseYear"', 'INTEGER');
+  await ensureColumn('movies', '"genre"', 'TEXT');
+  await ensureColumn('movies', '"rating"', 'TEXT');
+  await ensureColumn('movies', '"notes"', 'TEXT');
+
+  await ensureColumn('diaries', '"date"', 'TEXT');
+  await ensureColumn('diaries', '"mood"', 'TEXT');
+  await ensureColumn('diaries', '"weather"', 'TEXT');
+  await ensureColumn('diaries', '"location"', 'TEXT');
+  await ensureColumn('diaries', '"tags"', 'TEXT');
+  await ensureColumn('diaries', '"privateNotes"', 'TEXT');
+  await ensureColumn('diaries', '"createdAt"', 'TEXT');
+
+  await ensureColumn('books', '"publicationYear"', 'INTEGER');
+  await ensureColumn('books', '"genre"', 'TEXT');
+  await ensureColumn('books', '"rating"', 'TEXT');
+  await ensureColumn('books', '"pages"', 'INTEGER');
+  await ensureColumn('books', '"status"', 'TEXT');
+  await ensureColumn('books', '"tags"', 'TEXT');
+  await ensureColumn('books', '"notes"', 'TEXT');
+  await ensureColumn('books', '"createdAt"', 'TEXT');
 }
 
 function createToken(user) {
@@ -147,6 +143,16 @@ function authMiddleware(req, res, next) {
   } catch (e) {
     return res.status(401).json({ message: 'Invalid token' });
   }
+}
+
+async function dbGet(sql, params = []) {
+  const result = await pool.query(sql, params);
+  return result.rows[0];
+}
+
+async function dbAll(sql, params = []) {
+  const result = await pool.query(sql, params);
+  return result.rows;
 }
 
 // Helper function to process book data before returning
@@ -276,15 +282,18 @@ function processDiaries(diaries) {
 }
 
 // Auth routes
-app.post('/api/users/register', (req, res) => {
+app.post('/api/users/register', async (req, res) => {
   const { name, email, password } = req.body;
   if (!name || !email || !password) return res.status(400).json({ message: 'Missing fields' });
   try {
-    const existing = db.prepare('SELECT id FROM users WHERE name = ? OR email = ?').get(name, email);
+    const existing = await dbGet('SELECT id FROM users WHERE name = $1 OR email = $2', [name, email]);
     if (existing) return res.status(400).json({ message: 'User already exists.' });
     const passwordHash = bcrypt.hashSync(password, 10);
-    const info = db.prepare('INSERT INTO users (name, email, passwordHash) VALUES (?, ?, ?)').run(name, email, passwordHash);
-    const user = { id: info.lastInsertRowid, name };
+    const inserted = await dbGet(
+      'INSERT INTO users (name, email, "passwordHash") VALUES ($1, $2, $3) RETURNING id',
+      [name, email, passwordHash]
+    );
+    const user = { id: inserted.id, name };
     const token = createToken(user);
     return res.json({ token, userId: user.id });
   } catch (e) {
@@ -292,11 +301,11 @@ app.post('/api/users/register', (req, res) => {
   }
 });
 
-app.post('/api/users/login', (req, res) => {
+app.post('/api/users/login', async (req, res) => {
   const { name, password } = req.body;
   if (!name || !password) return res.status(400).json({ message: 'Missing fields' });
   try {
-    const user = db.prepare('SELECT * FROM users WHERE name = ?').get(name);
+    const user = await dbGet('SELECT id, name, "passwordHash" FROM users WHERE name = $1', [name]);
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
     const valid = bcrypt.compareSync(password, user.passwordHash);
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
@@ -308,19 +317,22 @@ app.post('/api/users/login', (req, res) => {
 });
 
 // Books
-app.get('/api/users/:userId/books', authMiddleware, (req, res) => {
+app.get('/api/users/:userId/books', authMiddleware, async (req, res) => {
   const { userId } = req.params;
   if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
-  const rows = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, createdAt, userId FROM books WHERE userId = ?').all(userId);
+  const rows = await dbAll(
+    'SELECT id, title, author, description, "publicationYear", genre, rating, pages, status, tags, notes, "createdAt", "userId" FROM books WHERE "userId" = $1',
+    [userId]
+  );
   return res.json(processBooks(rows));
 });
 
-app.get('/api/books', authMiddleware, (req, res) => {
-  const rows = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, createdAt, userId FROM books').all();
+app.get('/api/books', authMiddleware, async (req, res) => {
+  const rows = await dbAll('SELECT id, title, author, description, "publicationYear", genre, rating, pages, status, tags, notes, "createdAt", "userId" FROM books');
   return res.json(processBooks(rows));
 });
 
-app.post('/api/users/:userId/books', authMiddleware, (req, res) => {
+app.post('/api/users/:userId/books', authMiddleware, async (req, res) => {
   const { userId } = req.params;
   if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
   const { title, author, description, publicationYear, genre, rating, pages, status, tags, notes } = req.body;
@@ -331,13 +343,13 @@ app.post('/api/users/:userId/books', authMiddleware, (req, res) => {
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
   console.log('Tags JSON:', tagsJson);
   
-  // Preserve empty strings, but convert undefined to null
   const createdAt = new Date().toISOString();
-  const info = db.prepare('INSERT INTO books (title, author, description, publicationYear, genre, rating, pages, status, tags, notes, userId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(
-      title, 
-      author, 
-      description, 
+  const book = await dbGet(
+    'INSERT INTO books (title, author, description, "publicationYear", genre, rating, pages, status, tags, notes, "userId", "createdAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id, title, author, description, "publicationYear", genre, rating, pages, status, tags, notes, "createdAt", "userId"',
+    [
+      title,
+      author,
+      description,
       publicationYear !== undefined && publicationYear !== '' ? publicationYear : null,
       genre !== undefined && genre !== '' ? genre : null,
       rating !== undefined && rating !== '' ? rating : null,
@@ -347,26 +359,25 @@ app.post('/api/users/:userId/books', authMiddleware, (req, res) => {
       notes !== undefined && notes !== '' ? notes : null,
       userId,
       createdAt
-    );
-  // Explicitly select all columns to ensure they're included
-  const book = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, createdAt, userId FROM books WHERE id = ?').get(info.lastInsertRowid);
-  console.log('Raw book from database:', book);
-  console.log('Book columns:', Object.keys(book || {}));
+    ]
+  );
   const processed = processBook(book);
-  console.log('Processed book before sending:', processed);
   return res.status(201).json(processed);
 });
 
-app.put('/api/books/:id', authMiddleware, (req, res) => {
+app.put('/api/books/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const { title, author, description, publicationYear, genre, rating, pages, status, tags, notes } = req.body;
-  const existing = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, createdAt, userId FROM books WHERE id = ?').get(id);
+  const existing = await dbGet(
+    'SELECT id, title, author, description, "publicationYear", genre, rating, pages, status, tags, notes, "createdAt", "userId" FROM books WHERE id = $1',
+    [id]
+  );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
-  // Handle updates: use new value if provided, otherwise keep existing
-  db.prepare('UPDATE books SET title = ?, author = ?, description = ?, publicationYear = ?, genre = ?, rating = ?, pages = ?, status = ?, tags = ?, notes = ? WHERE id = ?')
-    .run(
+  await pool.query(
+    'UPDATE books SET title = $1, author = $2, description = $3, "publicationYear" = $4, genre = $5, rating = $6, pages = $7, status = $8, tags = $9, notes = $10 WHERE id = $11',
+    [
       title !== undefined ? title : existing.title,
       author !== undefined ? author : existing.author,
       description !== undefined ? description : existing.description,
@@ -378,64 +389,79 @@ app.put('/api/books/:id', authMiddleware, (req, res) => {
       tags !== undefined ? tagsJson : existing.tags,
       notes !== undefined && notes !== '' ? notes : (notes === '' ? null : existing.notes),
       id
-    );
-  const updated = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, createdAt, userId FROM books WHERE id = ?').get(id);
+    ]
+  );
+  const updated = await dbGet(
+    'SELECT id, title, author, description, "publicationYear", genre, rating, pages, status, tags, notes, "createdAt", "userId" FROM books WHERE id = $1',
+    [id]
+  );
   return res.json(processBook(updated));
 });
 
-app.delete('/api/books/:id', authMiddleware, (req, res) => {
+app.delete('/api/books/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const existing = db.prepare('SELECT id, title, author, description, publicationYear, genre, rating, pages, status, tags, notes, userId FROM books WHERE id = ?').get(id);
+  const existing = await dbGet(
+    'SELECT id, title, author, description, "publicationYear", genre, rating, pages, status, tags, notes, "userId" FROM books WHERE id = $1',
+    [id]
+  );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  db.prepare('DELETE FROM books WHERE id = ?').run(id);
+  await pool.query('DELETE FROM books WHERE id = $1', [id]);
   return res.status(204).send();
 });
 
 // Quotes
-app.get('/api/users/:userId/quotes', authMiddleware, (req, res) => {
+app.get('/api/users/:userId/quotes', authMiddleware, async (req, res) => {
   const { userId } = req.params;
   if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
-  const rows = db.prepare('SELECT id, title, author, description, source, category, date, tags, notes, userId FROM quotes WHERE userId = ?').all(userId);
+  const rows = await dbAll(
+    'SELECT id, title, author, description, source, category, "date", tags, notes, "userId" FROM quotes WHERE "userId" = $1',
+    [userId]
+  );
   return res.json(processQuotes(rows));
 });
 
-app.get('/api/quotes', authMiddleware, (req, res) => {
-  const rows = db.prepare('SELECT id, title, author, description, source, category, date, tags, notes, userId FROM quotes').all();
+app.get('/api/quotes', authMiddleware, async (req, res) => {
+  const rows = await dbAll('SELECT id, title, author, description, source, category, "date", tags, notes, "userId" FROM quotes');
   return res.json(processQuotes(rows));
 });
 
-app.post('/api/users/:userId/quotes', authMiddleware, (req, res) => {
+app.post('/api/users/:userId/quotes', authMiddleware, async (req, res) => {
   const { userId } = req.params;
   if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
   const { title, author, description, source, category, date, tags, notes } = req.body;
   if (!title || !author || !description) return res.status(400).json({ message: 'Missing required fields' });
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
-  const info = db.prepare('INSERT INTO quotes (title, author, description, source, category, date, tags, notes, userId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(
-      title, 
-      author, 
-      description, 
+  const quote = await dbGet(
+    'INSERT INTO quotes (title, author, description, source, category, "date", tags, notes, "userId") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, title, author, description, source, category, "date", tags, notes, "userId"',
+    [
+      title,
+      author,
+      description,
       source !== undefined && source !== '' ? source : null,
       category !== undefined && category !== '' ? category : null,
       date !== undefined && date !== '' ? date : null,
       tagsJson,
       notes !== undefined && notes !== '' ? notes : null,
       userId
-    );
-  const quote = db.prepare('SELECT id, title, author, description, source, category, date, tags, notes, userId FROM quotes WHERE id = ?').get(info.lastInsertRowid);
+    ]
+  );
   return res.status(201).json(processQuote(quote));
 });
 
-app.put('/api/quotes/:id', authMiddleware, (req, res) => {
+app.put('/api/quotes/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const { title, author, description, source, category, date, tags, notes } = req.body;
-  const existing = db.prepare('SELECT id, title, author, description, source, category, date, tags, notes, userId FROM quotes WHERE id = ?').get(id);
+  const existing = await dbGet(
+    'SELECT id, title, author, description, source, category, "date", tags, notes, "userId" FROM quotes WHERE id = $1',
+    [id]
+  );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
-  db.prepare('UPDATE quotes SET title = ?, author = ?, description = ?, source = ?, category = ?, date = ?, tags = ?, notes = ? WHERE id = ?')
-    .run(
+  await pool.query(
+    'UPDATE quotes SET title = $1, author = $2, description = $3, source = $4, category = $5, "date" = $6, tags = $7, notes = $8 WHERE id = $9',
+    [
       title !== undefined ? title : existing.title,
       author !== undefined ? author : existing.author,
       description !== undefined ? description : existing.description,
@@ -445,61 +471,76 @@ app.put('/api/quotes/:id', authMiddleware, (req, res) => {
       tags !== undefined ? tagsJson : existing.tags,
       notes !== undefined && notes !== '' ? notes : (notes === '' ? null : existing.notes),
       id
-    );
-  const updated = db.prepare('SELECT id, title, author, description, source, category, date, tags, notes, userId FROM quotes WHERE id = ?').get(id);
+    ]
+  );
+  const updated = await dbGet(
+    'SELECT id, title, author, description, source, category, "date", tags, notes, "userId" FROM quotes WHERE id = $1',
+    [id]
+  );
   return res.json(processQuote(updated));
 });
 
-app.delete('/api/quotes/:id', authMiddleware, (req, res) => {
+app.delete('/api/quotes/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const existing = db.prepare('SELECT id, title, author, description, source, category, date, tags, notes, userId FROM quotes WHERE id = ?').get(id);
+  const existing = await dbGet(
+    'SELECT id, title, author, description, source, category, "date", tags, notes, "userId" FROM quotes WHERE id = $1',
+    [id]
+  );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  db.prepare('DELETE FROM quotes WHERE id = ?').run(id);
+  await pool.query('DELETE FROM quotes WHERE id = $1', [id]);
   return res.status(204).send();
 });
 
 // Movies
-app.get('/api/users/:userId/movies', authMiddleware, (req, res) => {
+app.get('/api/users/:userId/movies', authMiddleware, async (req, res) => {
   const { userId } = req.params;
   if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
-  const rows = db.prepare('SELECT id, title, director, description, releaseYear, genre, rating, notes, userId FROM movies WHERE userId = ?').all(userId);
+  const rows = await dbAll(
+    'SELECT id, title, director, description, "releaseYear", genre, rating, notes, "userId" FROM movies WHERE "userId" = $1',
+    [userId]
+  );
   return res.json(processMovies(rows));
 });
 
-app.get('/api/movies', authMiddleware, (req, res) => {
-  const rows = db.prepare('SELECT id, title, director, description, releaseYear, genre, rating, notes, userId FROM movies').all();
+app.get('/api/movies', authMiddleware, async (req, res) => {
+  const rows = await dbAll('SELECT id, title, director, description, "releaseYear", genre, rating, notes, "userId" FROM movies');
   return res.json(processMovies(rows));
 });
 
-app.post('/api/users/:userId/movies', authMiddleware, (req, res) => {
+app.post('/api/users/:userId/movies', authMiddleware, async (req, res) => {
   const { userId } = req.params;
   if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
   const { title, director, description, releaseYear, genre, rating, notes } = req.body;
   if (!title || !director || !description) return res.status(400).json({ message: 'Missing required fields' });
-  const info = db.prepare('INSERT INTO movies (title, director, description, releaseYear, genre, rating, notes, userId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(
-      title, 
-      director, 
-      description, 
+  const movie = await dbGet(
+    'INSERT INTO movies (title, director, description, "releaseYear", genre, rating, notes, "userId") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, title, director, description, "releaseYear", genre, rating, notes, "userId"',
+    [
+      title,
+      director,
+      description,
       releaseYear !== undefined && releaseYear !== '' ? releaseYear : null,
       genre !== undefined && genre !== '' ? genre : null,
       rating !== undefined && rating !== '' ? rating : null,
       notes !== undefined && notes !== '' ? notes : null,
       userId
-    );
-  const movie = db.prepare('SELECT id, title, director, description, releaseYear, genre, rating, notes, userId FROM movies WHERE id = ?').get(info.lastInsertRowid);
+    ]
+  );
   return res.status(201).json(processMovie(movie));
 });
 
-app.put('/api/movies/:id', authMiddleware, (req, res) => {
+app.put('/api/movies/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const { title, director, description, releaseYear, genre, rating, notes } = req.body;
-  const existing = db.prepare('SELECT id, title, director, description, releaseYear, genre, rating, notes, userId FROM movies WHERE id = ?').get(id);
+  const existing = await dbGet(
+    'SELECT id, title, director, description, "releaseYear", genre, rating, notes, "userId" FROM movies WHERE id = $1',
+    [id]
+  );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  db.prepare('UPDATE movies SET title = ?, director = ?, description = ?, releaseYear = ?, genre = ?, rating = ?, notes = ? WHERE id = ?')
-    .run(
+  await pool.query(
+    'UPDATE movies SET title = $1, director = $2, description = $3, "releaseYear" = $4, genre = $5, rating = $6, notes = $7 WHERE id = $8',
+    [
       title !== undefined ? title : existing.title,
       director !== undefined ? director : existing.director,
       description !== undefined ? description : existing.description,
@@ -508,66 +549,81 @@ app.put('/api/movies/:id', authMiddleware, (req, res) => {
       rating !== undefined && rating !== '' ? rating : (rating === '' ? null : existing.rating),
       notes !== undefined && notes !== '' ? notes : (notes === '' ? null : existing.notes),
       id
-    );
-  const updated = db.prepare('SELECT id, title, director, description, releaseYear, genre, rating, notes, userId FROM movies WHERE id = ?').get(id);
+    ]
+  );
+  const updated = await dbGet(
+    'SELECT id, title, director, description, "releaseYear", genre, rating, notes, "userId" FROM movies WHERE id = $1',
+    [id]
+  );
   return res.json(processMovie(updated));
 });
 
-app.delete('/api/movies/:id', authMiddleware, (req, res) => {
+app.delete('/api/movies/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const existing = db.prepare('SELECT id, title, director, description, releaseYear, genre, rating, notes, userId FROM movies WHERE id = ?').get(id);
+  const existing = await dbGet(
+    'SELECT id, title, director, description, "releaseYear", genre, rating, notes, "userId" FROM movies WHERE id = $1',
+    [id]
+  );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  db.prepare('DELETE FROM movies WHERE id = ?').run(id);
+  await pool.query('DELETE FROM movies WHERE id = $1', [id]);
   return res.status(204).send();
 });
 
 // Diaries
-app.get('/api/users/:userId/diaries', authMiddleware, (req, res) => {
+app.get('/api/users/:userId/diaries', authMiddleware, async (req, res) => {
   const { userId } = req.params;
   if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
-  const rows = db.prepare('SELECT id, title, body, userId, createdAt, date, mood, weather, location, tags, privateNotes FROM diaries WHERE userId = ?').all(userId);
+  const rows = await dbAll(
+    'SELECT id, title, body, "userId", "createdAt", "date", mood, weather, location, tags, "privateNotes" FROM diaries WHERE "userId" = $1',
+    [userId]
+  );
   return res.json(processDiaries(rows));
 });
 
-app.get('/api/diaries', authMiddleware, (req, res) => {
-  const rows = db.prepare('SELECT id, title, body, userId, createdAt, date, mood, weather, location, tags, privateNotes FROM diaries').all();
+app.get('/api/diaries', authMiddleware, async (req, res) => {
+  const rows = await dbAll('SELECT id, title, body, "userId", "createdAt", "date", mood, weather, location, tags, "privateNotes" FROM diaries');
   return res.json(processDiaries(rows));
 });
 
-app.post('/api/users/:userId/diaries', authMiddleware, (req, res) => {
+app.post('/api/users/:userId/diaries', authMiddleware, async (req, res) => {
   const { userId } = req.params;
   if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
   const { title, body, createdAt, date, mood, weather, location, tags, privateNotes } = req.body;
   if (!title || !body) return res.status(400).json({ message: 'Missing required fields' });
   const timestamp = createdAt || new Date().toISOString();
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
-  const info = db.prepare('INSERT INTO diaries (title, body, userId, createdAt, date, mood, weather, location, tags, privateNotes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(
-      title, 
-      body, 
-      userId, 
-      timestamp, 
+  const diary = await dbGet(
+    'INSERT INTO diaries (title, body, "userId", "createdAt", "date", mood, weather, location, tags, "privateNotes") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, title, body, "userId", "createdAt", "date", mood, weather, location, tags, "privateNotes"',
+    [
+      title,
+      body,
+      userId,
+      timestamp,
       date !== undefined && date !== '' ? date : null,
       mood !== undefined && mood !== '' ? mood : null,
       weather !== undefined && weather !== '' ? weather : null,
       location !== undefined && location !== '' ? location : null,
       tagsJson,
       privateNotes !== undefined && privateNotes !== '' ? privateNotes : null
-    );
-  const diary = db.prepare('SELECT id, title, body, userId, createdAt, date, mood, weather, location, tags, privateNotes FROM diaries WHERE id = ?').get(info.lastInsertRowid);
+    ]
+  );
   return res.status(201).json(processDiary(diary));
 });
 
-app.put('/api/diaries/:id', authMiddleware, (req, res) => {
+app.put('/api/diaries/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const { title, body, date, mood, weather, location, tags, privateNotes } = req.body;
-  const existing = db.prepare('SELECT id, title, body, userId, createdAt, date, mood, weather, location, tags, privateNotes FROM diaries WHERE id = ?').get(id);
+  const existing = await dbGet(
+    'SELECT id, title, body, "userId", "createdAt", "date", mood, weather, location, tags, "privateNotes" FROM diaries WHERE id = $1',
+    [id]
+  );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
-  db.prepare('UPDATE diaries SET title = ?, body = ?, date = ?, mood = ?, weather = ?, location = ?, tags = ?, privateNotes = ? WHERE id = ?')
-    .run(
+  await pool.query(
+    'UPDATE diaries SET title = $1, body = $2, "date" = $3, mood = $4, weather = $5, location = $6, tags = $7, "privateNotes" = $8 WHERE id = $9',
+    [
       title !== undefined ? title : existing.title,
       body !== undefined ? body : existing.body,
       date !== undefined && date !== '' ? date : (date === '' ? null : existing.date),
@@ -577,29 +633,36 @@ app.put('/api/diaries/:id', authMiddleware, (req, res) => {
       tags !== undefined ? tagsJson : existing.tags,
       privateNotes !== undefined && privateNotes !== '' ? privateNotes : (privateNotes === '' ? null : existing.privateNotes),
       id
-    );
-  const updated = db.prepare('SELECT id, title, body, userId, createdAt, date, mood, weather, location, tags, privateNotes FROM diaries WHERE id = ?').get(id);
+    ]
+  );
+  const updated = await dbGet(
+    'SELECT id, title, body, "userId", "createdAt", "date", mood, weather, location, tags, "privateNotes" FROM diaries WHERE id = $1',
+    [id]
+  );
   return res.json(processDiary(updated));
 });
 
-app.delete('/api/diaries/:id', authMiddleware, (req, res) => {
+app.delete('/api/diaries/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const existing = db.prepare('SELECT id, title, body, userId, createdAt, date, mood, weather, location, tags, privateNotes FROM diaries WHERE id = ?').get(id);
+  const existing = await dbGet(
+    'SELECT id, title, body, "userId", "createdAt", "date", mood, weather, location, tags, "privateNotes" FROM diaries WHERE id = $1',
+    [id]
+  );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  db.prepare('DELETE FROM diaries WHERE id = ?').run(id);
+  await pool.query('DELETE FROM diaries WHERE id = $1', [id]);
   return res.status(204).send();
 });
 
 // Activities routes
-app.get('/api/users/:userId/activities', authMiddleware, (req, res) => {
+app.get('/api/users/:userId/activities', authMiddleware, async (req, res) => {
   const { userId } = req.params;
   if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
-  const rows = db.prepare('SELECT * FROM activities WHERE userId = ?').all(userId);
+  const rows = await dbAll('SELECT * FROM activities WHERE "userId" = $1', [userId]);
   return res.json(rows);
 });
 
-app.post('/api/users/:userId/activities', authMiddleware, (req, res) => {
+app.post('/api/users/:userId/activities', authMiddleware, async (req, res) => {
   const { userId } = req.params;
   if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
   const { title, description, category, date, duration, location, status, priority, tags, notes } = req.body;
@@ -610,26 +673,29 @@ app.post('/api/users/:userId/activities', authMiddleware, (req, res) => {
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
   const timestamp = new Date().toISOString();
   
-  const info = db.prepare(`
-    INSERT INTO activities (title, description, category, date, duration, location, status, priority, tags, notes, userId, createdAt, updatedAt) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(title, description, category, date, duration, location, status, priority, tagsJson, notes, userId, timestamp, timestamp);
+  const activity = await dbGet(
+    `
+    INSERT INTO activities (title, description, category, date, duration, location, status, priority, tags, notes, "userId", "createdAt", "updatedAt") 
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    RETURNING *
+    `,
+    [title, description, category, date, duration, location, status, priority, tagsJson, notes, userId, timestamp, timestamp]
+  );
   
-  const activity = db.prepare('SELECT * FROM activities WHERE id = ?').get(info.lastInsertRowid);
   return res.status(201).json(activity);
 });
 
-app.get('/api/activities/:id', authMiddleware, (req, res) => {
+app.get('/api/activities/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const activity = db.prepare('SELECT * FROM activities WHERE id = ?').get(id);
+  const activity = await dbGet('SELECT * FROM activities WHERE id = $1', [id]);
   if (!activity) return res.status(404).json({ message: 'Activity not found' });
   if (activity.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
   return res.json(activity);
 });
 
-app.put('/api/activities/:id', authMiddleware, (req, res) => {
+app.put('/api/activities/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const existing = db.prepare('SELECT * FROM activities WHERE id = ?').get(id);
+  const existing = await dbGet('SELECT * FROM activities WHERE id = $1', [id]);
   if (!existing) return res.status(404).json({ message: 'Activity not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
   
@@ -637,40 +703,54 @@ app.put('/api/activities/:id', authMiddleware, (req, res) => {
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
   const timestamp = new Date().toISOString();
   
-  db.prepare(`
+  await pool.query(
+    `
     UPDATE activities SET 
-    title = ?, description = ?, category = ?, date = ?, duration = ?, location = ?, 
-    status = ?, priority = ?, tags = ?, notes = ?, updatedAt = ?
-    WHERE id = ?
-  `).run(
-    title ?? existing.title,
-    description ?? existing.description,
-    category ?? existing.category,
-    date ?? existing.date,
-    duration ?? existing.duration,
-    location ?? existing.location,
-    status ?? existing.status,
-    priority ?? existing.priority,
-    tagsJson ?? existing.tags,
-    notes ?? existing.notes,
-    timestamp,
-    id
+    title = $1, description = $2, category = $3, date = $4, duration = $5, location = $6, 
+    status = $7, priority = $8, tags = $9, notes = $10, "updatedAt" = $11
+    WHERE id = $12
+    `,
+    [
+      title ?? existing.title,
+      description ?? existing.description,
+      category ?? existing.category,
+      date ?? existing.date,
+      duration ?? existing.duration,
+      location ?? existing.location,
+      status ?? existing.status,
+      priority ?? existing.priority,
+      tagsJson ?? existing.tags,
+      notes ?? existing.notes,
+      timestamp,
+      id
+    ]
   );
   
-  const updated = db.prepare('SELECT * FROM activities WHERE id = ?').get(id);
+  const updated = await dbGet('SELECT * FROM activities WHERE id = $1', [id]);
   return res.json(updated);
 });
 
-app.delete('/api/activities/:id', authMiddleware, (req, res) => {
+app.delete('/api/activities/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const existing = db.prepare('SELECT * FROM activities WHERE id = ?').get(id);
+  const existing = await dbGet('SELECT * FROM activities WHERE id = $1', [id]);
   if (!existing) return res.status(404).json({ message: 'Activity not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  db.prepare('DELETE FROM activities WHERE id = ?').run(id);
+  await pool.query('DELETE FROM activities WHERE id = $1', [id]);
   return res.status(204).send();
 });
-app.listen(PORT, () => {
-  console.log(`API listening on http://localhost:${PORT}`);
-});
+
+async function start() {
+  try {
+    await initDb();
+    app.listen(PORT, () => {
+      console.log(`API listening on http://localhost:${PORT}`);
+    });
+  } catch (e) {
+    console.error('Failed to initialize database:', e);
+    process.exit(1);
+  }
+}
+
+start();
 
 
