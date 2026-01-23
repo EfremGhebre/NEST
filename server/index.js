@@ -6,14 +6,15 @@ const Database = require('better-sqlite3');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.API_PORT || 3000;
+const PORT = process.env.PORT || process.env.API_PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
+const DB_PATH = process.env.DB_PATH || 'bnq.db';
 
 app.use(cors());
 app.use(express.json());
 
 // Initialize DB (file-based for persistence in dev)
-const db = new Database('bnq.db');
+const db = new Database(DB_PATH);
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
