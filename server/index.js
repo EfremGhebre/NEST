@@ -9,8 +9,13 @@ const app = express();
 const PORT = process.env.PORT || process.env.API_PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 const DATABASE_URL = process.env.DATABASE_URL;
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;
 
-app.use(cors());
+app.use(cors({
+  origin: FRONTEND_ORIGIN || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 if (!DATABASE_URL) {
