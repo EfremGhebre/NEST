@@ -40,9 +40,6 @@
           <button class="theme-toggle-button" (click)="toggleTheme()" [title]="currentTheme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'">
             <i class="bi" [class.bi-sun]="currentTheme === 'light'" [class.bi-moon]="currentTheme === 'dark'"></i>
           </button>
-          <button class="layout-toggle-button" (click)="toggleLayout()" [title]="currentLayout === 'columns' ? 'Switch to Rows' : 'Switch to Columns'">
-            <i class="bi" [class.bi-list-ul]="currentLayout === 'columns'" [class.bi-grid-3x3-gap]="currentLayout === 'rows'"></i>
-          </button>
           <button class="logout-button" (click)="logout()">Logout</button>
         </div>
       </div>

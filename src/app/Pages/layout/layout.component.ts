@@ -15,9 +15,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   isNavbarCollapsed = false;
   isDropdownOpen = false;
   currentTheme: 'light' | 'dark' = 'light';
-  currentLayout: 'columns' | 'rows' = 'columns';
   private themeSubscription?: Subscription;
-  private layoutSubscription?: Subscription;
 
   constructor(
     private router: Router,
@@ -26,20 +24,14 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentTheme = this.themeService.getTheme();
-    this.currentLayout = this.themeService.getLayout();
     
     this.themeSubscription = this.themeService.theme$.subscribe(theme => {
       this.currentTheme = theme;
-    });
-    
-    this.layoutSubscription = this.themeService.layout$.subscribe(layout => {
-      this.currentLayout = layout;
     });
   }
 
   ngOnDestroy(): void {
     this.themeSubscription?.unsubscribe();
-    this.layoutSubscription?.unsubscribe();
   }
 
   navigateTo(route: string): void {
@@ -75,9 +67,5 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   toggleTheme(): void {
     this.themeService.toggleTheme();
-  }
-
-  toggleLayout(): void {
-    this.themeService.toggleLayout();
   }
 }
