@@ -140,6 +140,57 @@
     background: linear-gradient(135deg, #16a34a, #15803d);
   }
 
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    :host {
+      padding: 1rem 0.75rem;
+      align-items: stretch;
+    }
+
+    .landing-container {
+      min-height: auto;
+      width: 100%;
+      padding: 1.25rem 1rem;
+      border-radius: 12px;
+    }
+
+    .welcome-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .welcome-section h1 {
+      font-size: 1.8rem;
+    }
+
+    .welcome-section p {
+      font-size: 1rem;
+    }
+
+    .welcome-section .fa-book-reader {
+      font-size: 2rem;
+    }
+
+    .auth-box {
+      max-width: 100%;
+      padding: 1.25rem 1rem;
+      border-radius: 16px;
+    }
+
+    .auth-title {
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+    }
+
+    .auth-box .form-control {
+      font-size: 0.95rem;
+      padding: 0.65rem 0.85rem;
+    }
+
+    .btn-success {
+      padding: 0.7rem 0.9rem;
+    }
+  }
+
 @keyframes authShimmer {
   0% { transform: translateX(-40%) rotate(-12deg); opacity: 0.25; }
   50% { transform: translateX(40%) rotate(-12deg); opacity: 0.5; }
