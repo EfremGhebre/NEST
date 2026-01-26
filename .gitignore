@@ -43,3 +43,6 @@ Thumbs.db
 
 node_modules
 server/node_modules
+
+server/.env
+.env

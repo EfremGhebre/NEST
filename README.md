@@ -1,27 +1,97 @@
 # NEST
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.11.
+NEST is a personal content hub for Books, Quotes, Movies, Diaries, and Activities. It includes authentication, rich card views, tagging, and searchable collections.
 
-## Development server
+## Features
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- Auth (register/login) with JWT
+- CRUD for Books, Quotes, Movies, Diaries, Activities
+- Tags, ratings, status, notes, and metadata
+- Light/dark theme with responsive layouts
 
-## Code scaffolding
+## Tech Stack
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- Frontend: Angular
+- Backend: Node.js + Express
+- Database: Postgres (Supabase) in production, SQLite in local dev
 
-## Build
+## Local Development
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+### 1) Backend
 
-## Running unit tests
+From `server/`:
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+```
+npm install
+```
 
-## Running end-to-end tests
+Create `server/.env`:
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+```
+DB_ENGINE=sqlite
+DB_PATH=bnq.db
+JWT_SECRET=dev_secret
+```
 
-## Further help
+Start API:
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+```
+npm run start
+```
+
+API runs on `http://localhost:3000`.
+
+### 2) Frontend
+
+From repo root:
+
+```
+npm install
+npm start
+```
+
+App runs on `http://localhost:4200` and proxies `/api` to the backend via `proxy.conf.json`.
+
+## Production
+
+### Backend (Render)
+
+Set environment variables:
+
+- `DATABASE_URL` (Supabase connection string or pooler URI)
+- `JWT_SECRET`
+- `FRONTEND_ORIGIN` (Vercel URL)
+
+Start command:
+
+```
+npm start
+```
+
+### Frontend (Vercel)
+
+Build command:
+
+```
+npm run build
+```
+
+Output directory:
+
+```
+dist/bn-q
+```
+
+Make sure `src/environments/environment.prod.ts` points to the Render API URL.
+
+## Scripts
+
+Root:
+
+- `npm start`: Angular dev server (with proxy)
+- `npm run build`: Production build
+
+Server:
+
+- `npm run start`: Start API
+- `npm run dev`: Start API with nodemon
