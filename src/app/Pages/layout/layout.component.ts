@@ -36,7 +36,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   navigateTo(route: string): void {
     this.router.navigate([`/layout/${route}`]);
-    this.isNavbarCollapsed = false;
+    this.closeNavbarMenu();
   }
 
   toggleNavbar() {
@@ -51,6 +51,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.isDropdownOpen = false;
   }
 
+  closeNavbarMenu() {
+    this.isNavbarCollapsed = false;
+    this.closeDropdown();
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event) {
     const target = event.target as HTMLElement;
@@ -62,10 +67,12 @@ export class LayoutComponent implements OnInit, OnDestroy {
   logout(): void {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userId');
+    this.closeNavbarMenu();
     this.router.navigate(['/login']);
   }
 
   toggleTheme(): void {
     this.themeService.toggleTheme();
+    this.closeNavbarMenu();
   }
 }

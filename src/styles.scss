@@ -209,6 +209,17 @@ body[data-theme="dark"] {
     }
   }
 
+  @media (max-width: 768px) {
+    .content-card,
+    .book-card,
+    .quote-card,
+    .movie-card,
+    .diary-card,
+    .activity-card {
+      padding: 0.75rem 0.85rem;
+    }
+  }
+
   /* Modal (Edit Book) */
   .modal-content {
     background: rgba(27, 31, 36, 0.95);
@@ -696,6 +707,20 @@ body[data-theme="dark"] {
   line-height: 1.5;
 }
 
+.form-input:where(select) {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+
+.form-input:where(select) option {
+  background: #1f2937;
+  color: #fff;
+}
+
 .form-select {
   cursor: pointer;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
@@ -707,6 +732,129 @@ body[data-theme="dark"] {
   option {
     background: #333;
     color: #fff;
+  }
+}
+
+body[data-theme="light"],
+body:not([data-theme]) {
+  .content-card,
+  .book-card,
+  .quote-card,
+  .movie-card,
+  .diary-card,
+  .activity-card {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.55),
+        rgba(245, 236, 228, 0.45)
+      ) !important;
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08) !important;
+    backdrop-filter: blur(10px);
+  }
+
+  .content-card:hover,
+  .book-card:hover,
+  .quote-card:hover,
+  .movie-card:hover,
+  .diary-card:hover,
+  .activity-card:hover {
+    border-color: rgba(15, 23, 42, 0.18) !important;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12) !important;
+  }
+
+  .book-title,
+  .quote-title,
+  .movie-title,
+  .diary-title,
+  .activity-title {
+    color: #111827 !important;
+  }
+
+  .book-meta,
+  .quote-meta,
+  .movie-meta,
+  .diary-meta,
+  .activity-meta {
+    color: #1f2937 !important;
+  }
+
+  .book-type,
+  .quote-type,
+  .movie-type,
+  .diary-type,
+  .activity-category {
+    background: rgba(255, 255, 255, 0.85) !important;
+    color: #1f2937 !important;
+    border-color: rgba(15, 23, 42, 0.12) !important;
+  }
+
+  .book-genre,
+  .movie-genre,
+  .quote-category,
+  .book-status {
+    background: rgba(15, 23, 42, 0.06) !important;
+    color: #1f2937 !important;
+    border-color: rgba(15, 23, 42, 0.12) !important;
+  }
+
+  .book-author,
+  .quote-author,
+  .movie-director,
+  .diary-body,
+  .activity-description {
+    color: #374151 !important;
+  }
+
+  .book-description,
+  .quote-text,
+  .movie-description,
+  .detail-row,
+  .detail-label,
+  .detail-value,
+  .notes-content {
+    color: #1f2937 !important;
+  }
+
+  .book-metric,
+  .quote-metric,
+  .movie-metric,
+  .diary-metric,
+  .activity-metric,
+  .diary-date,
+  .activity-date {
+    color: #374151 !important;
+    background: rgba(15, 23, 42, 0.06) !important;
+    border-color: rgba(15, 23, 42, 0.12) !important;
+  }
+
+  .action-button {
+    color: rgba(15, 23, 42, 0.8) !important;
+    border-color: rgba(15, 23, 42, 0.18) !important;
+    background: rgba(15, 23, 42, 0.04) !important;
+  }
+
+  .detail-row {
+    padding-left: 0.5rem;
+  }
+
+  .form-input:where(select),
+  .form-select {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #1f2937;
+    border-color: rgba(15, 23, 42, 0.2);
+  }
+
+  .form-input:where(select) option,
+  .form-select option {
+    background: #ffffff;
+    color: #1f2937;
+  }
+}
+
+body[data-theme="dark"] {
+  .detail-row {
+    padding-left: 0.5rem;
   }
 }
 

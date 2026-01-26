@@ -9,6 +9,8 @@ const app = express();
 const PORT = process.env.PORT || process.env.API_PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 const DATABASE_URL = process.env.DATABASE_URL;
+const DB_PATH = process.env.DB_PATH || 'bnq.db';
+const DB_ENGINE = process.env.DB_ENGINE || (DATABASE_URL ? 'postgres' : 'sqlite');
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;
 
 app.use(cors({
@@ -18,91 +20,181 @@ app.use(cors({
 }));
 app.use(express.json());
 
-if (!DATABASE_URL) {
-  console.warn('DATABASE_URL is not set. Configure it with your Supabase Postgres URL.');
+let pool;
+let sqliteDb;
+
+if (DB_ENGINE === 'sqlite') {
+  const Database = require('better-sqlite3');
+  sqliteDb = new Database(DB_PATH);
+  sqliteDb.pragma('foreign_keys = ON');
+} else {
+  if (!DATABASE_URL) {
+    console.warn('DATABASE_URL is not set. Configure it with your Supabase Postgres URL.');
+  }
+
+  const ssl = DATABASE_URL && (DATABASE_URL.includes('supabase.co') || DATABASE_URL.includes('sslmode=require'))
+    ? { rejectUnauthorized: false }
+    : undefined;
+
+  pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl
+  });
 }
 
-const ssl = DATABASE_URL && (DATABASE_URL.includes('supabase.co') || DATABASE_URL.includes('sslmode=require'))
-  ? { rejectUnauthorized: false }
-  : undefined;
-
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ssl
-});
+function normalizeSql(sql) {
+  if (DB_ENGINE === 'sqlite') {
+    return sql.replace(/\$\d+/g, '?');
+  }
+  return sql;
+}
 
 async function ensureColumn(table, column, type) {
+  if (DB_ENGINE === 'sqlite') {
+    const columnName = column.replace(/"/g, '');
+    const cols = sqliteDb.prepare(`PRAGMA table_info(${table})`).all();
+    const exists = cols.some(c => c.name === columnName);
+    if (!exists) {
+      sqliteDb.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+    }
+    return;
+  }
   await pool.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} ${type}`);
 }
 
 async function initDb() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      name TEXT UNIQUE NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      "passwordHash" TEXT NOT NULL
-    );
-  `);
+  if (DB_ENGINE === 'sqlite') {
+    sqliteDb.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        "passwordHash" TEXT NOT NULL
+      );
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS books (
-      id SERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      author TEXT NOT NULL,
-      description TEXT NOT NULL,
-      "userId" INTEGER NOT NULL REFERENCES users(id)
-    );
-  `);
+      CREATE TABLE IF NOT EXISTS books (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        author TEXT NOT NULL,
+        description TEXT NOT NULL,
+        "userId" INTEGER NOT NULL,
+        FOREIGN KEY("userId") REFERENCES users(id)
+      );
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS quotes (
-      id SERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      author TEXT NOT NULL,
-      description TEXT NOT NULL,
-      "userId" INTEGER NOT NULL REFERENCES users(id)
-    );
-  `);
+      CREATE TABLE IF NOT EXISTS quotes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        author TEXT NOT NULL,
+        description TEXT NOT NULL,
+        "userId" INTEGER NOT NULL,
+        FOREIGN KEY("userId") REFERENCES users(id)
+      );
+       
+      CREATE TABLE IF NOT EXISTS movies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        director TEXT NOT NULL,
+        description TEXT NOT NULL,
+        "userId" INTEGER NOT NULL,
+        FOREIGN KEY("userId") REFERENCES users(id)
+      );
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS movies (
-      id SERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      director TEXT NOT NULL,
-      description TEXT NOT NULL,
-      "userId" INTEGER NOT NULL REFERENCES users(id)
-    );
-  `);
+      CREATE TABLE IF NOT EXISTS diaries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        "userId" INTEGER NOT NULL,
+        "createdAt" TEXT,
+        FOREIGN KEY("userId") REFERENCES users(id)
+      );
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS diaries (
-      id SERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      body TEXT NOT NULL,
-      "userId" INTEGER NOT NULL REFERENCES users(id),
-      "createdAt" TEXT
-    );
-  `);
+      CREATE TABLE IF NOT EXISTS activities (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        category TEXT NOT NULL,
+        date TEXT NOT NULL,
+        duration INTEGER,
+        location TEXT,
+        status TEXT NOT NULL,
+        priority TEXT NOT NULL,
+        tags TEXT,
+        notes TEXT,
+        "userId" INTEGER NOT NULL,
+        "createdAt" TEXT,
+        "updatedAt" TEXT,
+        FOREIGN KEY("userId") REFERENCES users(id)
+      );
+    `);
+  } else {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        "passwordHash" TEXT NOT NULL
+      );
+    `);
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS activities (
-      id SERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
-      category TEXT NOT NULL,
-      date TEXT NOT NULL,
-      duration INTEGER,
-      location TEXT,
-      status TEXT NOT NULL,
-      priority TEXT NOT NULL,
-      tags TEXT,
-      notes TEXT,
-      "userId" INTEGER NOT NULL REFERENCES users(id),
-      "createdAt" TEXT,
-      "updatedAt" TEXT
-    );
-  `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS books (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        author TEXT NOT NULL,
+        description TEXT NOT NULL,
+        "userId" INTEGER NOT NULL REFERENCES users(id)
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS quotes (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        author TEXT NOT NULL,
+        description TEXT NOT NULL,
+        "userId" INTEGER NOT NULL REFERENCES users(id)
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS movies (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        director TEXT NOT NULL,
+        description TEXT NOT NULL,
+        "userId" INTEGER NOT NULL REFERENCES users(id)
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS diaries (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        "userId" INTEGER NOT NULL REFERENCES users(id),
+        "createdAt" TEXT
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS activities (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        category TEXT NOT NULL,
+        date TEXT NOT NULL,
+        duration INTEGER,
+        location TEXT,
+        status TEXT NOT NULL,
+        priority TEXT NOT NULL,
+        tags TEXT,
+        notes TEXT,
+        "userId" INTEGER NOT NULL REFERENCES users(id),
+        "createdAt" TEXT,
+        "updatedAt" TEXT
+      );
+    `);
+  }
 
   await ensureColumn('quotes', '"source"', 'TEXT');
   await ensureColumn('quotes', '"category"', 'TEXT');
@@ -151,13 +243,29 @@ function authMiddleware(req, res, next) {
 }
 
 async function dbGet(sql, params = []) {
+  if (DB_ENGINE === 'sqlite') {
+    const stmt = sqliteDb.prepare(normalizeSql(sql));
+    return stmt.get(params);
+  }
   const result = await pool.query(sql, params);
   return result.rows[0];
 }
 
 async function dbAll(sql, params = []) {
+  if (DB_ENGINE === 'sqlite') {
+    const stmt = sqliteDb.prepare(normalizeSql(sql));
+    return stmt.all(params);
+  }
   const result = await pool.query(sql, params);
   return result.rows;
+}
+
+async function dbRun(sql, params = []) {
+  if (DB_ENGINE === 'sqlite') {
+    const stmt = sqliteDb.prepare(normalizeSql(sql));
+    return stmt.run(params);
+  }
+  return pool.query(sql, params);
 }
 
 // Helper function to process book data before returning
@@ -380,7 +488,7 @@ app.put('/api/books/:id', authMiddleware, async (req, res) => {
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
-  await pool.query(
+  await dbRun(
     'UPDATE books SET title = $1, author = $2, description = $3, "publicationYear" = $4, genre = $5, rating = $6, pages = $7, status = $8, tags = $9, notes = $10 WHERE id = $11',
     [
       title !== undefined ? title : existing.title,
@@ -411,7 +519,7 @@ app.delete('/api/books/:id', authMiddleware, async (req, res) => {
   );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  await pool.query('DELETE FROM books WHERE id = $1', [id]);
+  await dbRun('DELETE FROM books WHERE id = $1', [id]);
   return res.status(204).send();
 });
 
@@ -464,7 +572,7 @@ app.put('/api/quotes/:id', authMiddleware, async (req, res) => {
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
-  await pool.query(
+  await dbRun(
     'UPDATE quotes SET title = $1, author = $2, description = $3, source = $4, category = $5, "date" = $6, tags = $7, notes = $8 WHERE id = $9',
     [
       title !== undefined ? title : existing.title,
@@ -493,7 +601,7 @@ app.delete('/api/quotes/:id', authMiddleware, async (req, res) => {
   );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  await pool.query('DELETE FROM quotes WHERE id = $1', [id]);
+  await dbRun('DELETE FROM quotes WHERE id = $1', [id]);
   return res.status(204).send();
 });
 
@@ -543,7 +651,7 @@ app.put('/api/movies/:id', authMiddleware, async (req, res) => {
   );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  await pool.query(
+  await dbRun(
     'UPDATE movies SET title = $1, director = $2, description = $3, "releaseYear" = $4, genre = $5, rating = $6, notes = $7 WHERE id = $8',
     [
       title !== undefined ? title : existing.title,
@@ -571,7 +679,7 @@ app.delete('/api/movies/:id', authMiddleware, async (req, res) => {
   );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  await pool.query('DELETE FROM movies WHERE id = $1', [id]);
+  await dbRun('DELETE FROM movies WHERE id = $1', [id]);
   return res.status(204).send();
 });
 
@@ -626,7 +734,7 @@ app.put('/api/diaries/:id', authMiddleware, async (req, res) => {
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
-  await pool.query(
+  await dbRun(
     'UPDATE diaries SET title = $1, body = $2, "date" = $3, mood = $4, weather = $5, location = $6, tags = $7, "privateNotes" = $8 WHERE id = $9',
     [
       title !== undefined ? title : existing.title,
@@ -655,7 +763,7 @@ app.delete('/api/diaries/:id', authMiddleware, async (req, res) => {
   );
   if (!existing) return res.status(404).json({ message: 'Not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  await pool.query('DELETE FROM diaries WHERE id = $1', [id]);
+  await dbRun('DELETE FROM diaries WHERE id = $1', [id]);
   return res.status(204).send();
 });
 
@@ -708,7 +816,7 @@ app.put('/api/activities/:id', authMiddleware, async (req, res) => {
   const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : (tags ? JSON.stringify(tags.split(',').map(t => t.trim())) : null);
   const timestamp = new Date().toISOString();
   
-  await pool.query(
+  await dbRun(
     `
     UPDATE activities SET 
     title = $1, description = $2, category = $3, date = $4, duration = $5, location = $6, 
@@ -740,7 +848,7 @@ app.delete('/api/activities/:id', authMiddleware, async (req, res) => {
   const existing = await dbGet('SELECT * FROM activities WHERE id = $1', [id]);
   if (!existing) return res.status(404).json({ message: 'Activity not found' });
   if (existing.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
-  await pool.query('DELETE FROM activities WHERE id = $1', [id]);
+  await dbRun('DELETE FROM activities WHERE id = $1', [id]);
   return res.status(204).send();
 });
 
