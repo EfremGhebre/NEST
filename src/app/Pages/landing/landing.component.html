@@ -1,87 +1,169 @@
 <main class="landing-page">
-  <section class="hero-section">
-    <div class="hero-content">
-      <p class="brand">NEST</p>
-      <h1>Your thoughts, your favorites - all in one place.</h1>
-      <p class="subheadline">
-        NEST - All your Notes, Entertainment, Stories & Thoughts in one place.
-      </p>
-      <i class="fas fa-book-reader app-icon" aria-hidden="true"></i>
-      <div class="hero-actions">
-        <a routerLink="/auth" class="btn btn-primary-action">Get Started</a>
-        <button type="button" class="btn btn-secondary-action" (click)="scrollToContent()">
-          Explore
-        </button>
-      </div>
+  <nav class="navbar">
+    <div class="navbar-brand" (click)="scrollToContent()">
+      <span>NEST</span>
     </div>
-  </section>
-
-  <section id="landing-content" class="transition-section">
-    <div class="section-shell">
-      <h2>What You Can Save</h2>
-      <div class="save-grid">
-        <article class="feature-card">
-          <i class="fas fa-pen"></i>
-          <p>Notes & thoughts</p>
-        </article>
-        <article class="feature-card">
-          <i class="fas fa-film"></i>
-          <p>Favorite movies & shows</p>
-        </article>
-        <article class="feature-card">
-          <i class="fas fa-quote-left"></i>
-          <p>Quotes you love</p>
-        </article>
-        <article class="feature-card">
-          <i class="fas fa-lightbulb"></i>
-          <p>Ideas & activities</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="why-section">
-    <div class="section-shell">
-      <h2>Why NEST</h2>
-      <ul class="why-list">
-        <li>Everything in one place</li>
-        <li>Simple and distraction-free</li>
-        <li>Easy to organize and revisit</li>
-        <li>Built for everyday life</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="preview-section">
-    <div class="section-shell">
-      <h2>A quick look inside</h2>
-      <div class="preview-wrapper">
-        <article class="preview-card notes-preview">
-          <h3>Notes List</h3>
-          <ul>
-            <li>Morning reflection</li>
-            <li>Weekend plans with friends</li>
-            <li>Books to read this month</li>
-          </ul>
-        </article>
-        <article class="preview-card categories-preview">
-          <h3>Categories</h3>
-          <div class="chips">
-            <span>Movies</span>
-            <span>Quotes</span>
-            <span>Stories</span>
-            <span>Daily Notes</span>
+    <div class="navbar-controls">
+      <button class="navbar-toggler" [class.active]="isNavbarCollapsed" (click)="toggleNavbar()">
+        <span *ngIf="!isNavbarCollapsed">&#9776;</span>
+        <span *ngIf="isNavbarCollapsed">&times;</span>
+      </button>
+      <div class="navbar-menu" [class.active]="isNavbarCollapsed">
+        <div class="navbar-links">
+          <button *ngIf="isLoggedIn" class="nav-button" (click)="goToDashboard()">Dashboard</button>
+          <div class="dropdown">
+            <button class="nav-button dropdown-toggle" (click)="toggleDropdown()">
+              Collections
+              <i class="bi bi-chevron-down" [class.rotated]="isDropdownOpen"></i>
+            </button>
+            <div class="dropdown-menu" [class.show]="isDropdownOpen">
+              <button class="dropdown-item" (click)="goToAuth(); closeDropdown()">
+                <i class="bi bi-book"></i> Notes
+              </button>
+              <button class="dropdown-item" (click)="goToAuth(); closeDropdown()">
+                <i class="bi bi-quote"></i> Quotes
+              </button>
+              <button class="dropdown-item" (click)="goToAuth(); closeDropdown()">
+                <i class="bi bi-film"></i> Movies
+              </button>
+              <button class="dropdown-item" (click)="goToAuth(); closeDropdown()">
+                <i class="bi bi-activity"></i> Activities
+              </button>
+            </div>
           </div>
-          <p>Clean cards make it easy to capture and revisit what matters.</p>
-        </article>
+        </div>
+        <div class="nav-actions">
+          <button
+            class="theme-toggle-button"
+            (click)="toggleTheme()"
+            [title]="currentTheme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'"
+          >
+            <i class="bi" [class.bi-sun]="currentTheme === 'light'" [class.bi-moon]="currentTheme === 'dark'"></i>
+          </button>
+          <button class="login-button" (click)="goToAuth()">Login</button>
+        </div>
       </div>
     </div>
-  </section>
+  </nav>
 
-  <section class="final-cta-section">
-    <div class="section-shell final-cta-shell">
-      <h2>Start organizing your thoughts today</h2>
-      <a routerLink="/auth" class="btn btn-primary-action">Create Account</a>
-    </div>
-  </section>
+  <div class="dashboard-container">
+    <section class="welcome-section hero-card">
+      <div class="welcome-content">
+        <h1 class="welcome-title">NEST</h1>
+        <p class="hero-headline">Your thoughts, your favorites - all in one place.</p>
+        <p class="welcome-subtitle">All your Notes, Entertainment, Stories & Thoughts in one place.</p>
+        <div class="hero-actions">
+          <button class="cta-button" (click)="goToAuth()">Get Started</button>
+          <button class="explore-link" (click)="scrollToContent()">Explore the preview</button>
+        </div>
+      </div>
+      <div class="welcome-illustration">
+        <i class="bi bi-house-heart-fill"></i>
+      </div>
+    </section>
+
+    <section id="landing-content" class="section">
+      <h2 class="section-title">
+        <i class="bi bi-grid-1x2 me-2"></i>
+        What You Can Save
+      </h2>
+      <div class="stats-grid preview-stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="bi bi-journal-text"></i></div>
+          <div class="stat-content">
+            <h3 class="stat-number">Notes</h3>
+            <p class="stat-label">Capture your thoughts</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon"><i class="bi bi-quote"></i></div>
+          <div class="stat-content">
+            <h3 class="stat-number">Quotes</h3>
+            <p class="stat-label">Keep what inspires you</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon"><i class="bi bi-film"></i></div>
+          <div class="stat-content">
+            <h3 class="stat-number">Movies</h3>
+            <p class="stat-label">Save your favorites</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon"><i class="bi bi-activity"></i></div>
+          <div class="stat-content">
+            <h3 class="stat-number">Activities</h3>
+            <p class="stat-label">Track your moments</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">
+        <i class="bi bi-lightning-charge me-2"></i>
+        Quick Actions Preview
+      </h2>
+      <div class="quick-actions-grid">
+        <div
+          *ngFor="let action of quickActions"
+          class="quick-action-card"
+          [ngClass]="'action-' + action.color"
+          (click)="openQuickAction()"
+        >
+          <div class="action-icon">
+            <i [class]="action.icon"></i>
+          </div>
+          <div class="action-content">
+            <h4 class="action-title">{{ action.title }}</h4>
+            <p class="action-description">{{ action.description }}</p>
+          </div>
+          <div class="action-arrow">
+            <i class="bi bi-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">
+        <i class="bi bi-clock-history me-2"></i>
+        Recent Activity Preview
+      </h2>
+      <div class="recent-activity">
+        <div *ngFor="let item of recentItems" class="recent-item">
+          <div class="recent-icon" [ngClass]="'recent-' + item.type">
+            <i [class]="item.type === 'quote' ? 'bi bi-quote' : 'bi bi-journal-text'"></i>
+          </div>
+          <div class="recent-content">
+            <h5 class="recent-title">{{ item.title }}</h5>
+            <p class="recent-author">{{ item.author }}</p>
+          </div>
+          <div class="recent-date">{{ item.date }}</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">
+        <i class="bi bi-lightbulb me-2"></i>
+        Daily Inspiration
+      </h2>
+      <div class="inspiration-card">
+        <div class="inspiration-quote">
+          <i class="bi bi-quote"></i>
+          <p>"The secret of getting ahead is getting started."</p>
+          <cite>- Mark Twain</cite>
+        </div>
+      </div>
+    </section>
+
+    <section class="section final-cta">
+      <p>Start organizing your thoughts today.</p>
+      <button class="cta-button" (click)="goToAuth()">Get Started</button>
+    </section>
+  </div>
 </main>
