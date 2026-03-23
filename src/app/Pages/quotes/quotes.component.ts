@@ -62,7 +62,7 @@ export class QuotesComponent implements OnInit, OnDestroy {
     const userId = localStorage.getItem('userId');
     if (!userId) {
       this.error = 'No user found. Please login again.';
-      this.router.navigate(['/login']);
+      this.router.navigate(['/auth']);
       return;
     }
     this.isLoading = true;
@@ -90,7 +90,7 @@ export class QuotesComponent implements OnInit, OnDestroy {
         if (error.status === 401) {
           localStorage.removeItem('authToken');
           localStorage.removeItem('userId');
-          this.router.navigate(['/login']);
+          this.router.navigate(['/auth']);
         }
       }
     });

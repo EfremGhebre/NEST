@@ -28,12 +28,16 @@ export class LoginComponent {
     this.authService.login(name, password).subscribe({
       next: () => {
         // Navigate to dashboard after successful login
-        this.router.navigate(['/layout']);
+        this.router.navigate(['/dashboard']);
       },
       error: (err: any) => {
         console.error('Login error:', err);
         alert(err.message || 'Invalid credentials. Please try again.');
       },
     });
+  }
+
+  goHome(): void {
+    this.router.navigate(['/']);
   }
 }

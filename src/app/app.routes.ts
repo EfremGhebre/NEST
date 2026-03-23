@@ -1,6 +1,4 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './Users/login/login.component';
-import { RegisterComponent } from './Users/register/register.component';
 import { BooksComponent } from './Pages/books/books.component';
 import { QuotesComponent } from './Pages/quotes/quotes.component';
 import { DashboardComponent } from './Pages/dashboard/dashboard.component';
@@ -14,11 +12,15 @@ import { AddMovieComponent } from './Pages/add-movie/add-movie.component';
 import { AddDiaryComponent } from './Pages/add-diary/add-diary.component';
 import { AuthGuard } from './auth/auth.guard';
 import { LayoutComponent } from './Pages/layout/layout.component';
+import { LandingComponent } from './Pages/landing/landing.component';
+import { AuthPageComponent } from './Pages/auth-page/auth-page.component';
 
 export const routes: Routes = [
-  { path: '', component: LoginComponent },
-  { path: 'login', component: LoginComponent},
-  { path: 'register', component: RegisterComponent },
+  { path: '', component: LandingComponent },
+  { path: 'auth', component: AuthPageComponent },
+  { path: 'login', redirectTo: 'auth' },
+  { path: 'register', redirectTo: 'auth' },
+  { path: 'dashboard', redirectTo: 'layout/dashboard' },
   { path: 'layout', component: LayoutComponent, canActivate: [AuthGuard],
       children: [
         { path: '', component: DashboardComponent },

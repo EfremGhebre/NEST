@@ -26,10 +26,10 @@ describe('AuthGuard', () => {
     expect(executeGuard()).toBe(true);
   });
 
-  it('should deny access and navigate to login if not authenticated', () => {
+  it('should deny access and navigate to auth if not authenticated', () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userId');
     expect(executeGuard()).toBe(false);
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/login']);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth']);
   });
 });

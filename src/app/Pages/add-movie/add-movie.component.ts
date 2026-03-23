@@ -46,7 +46,7 @@ export class AddMovieComponent {
     if (this.loading) return;
     const userId = localStorage.getItem('userId');
     if (!userId) {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/auth']);
       return;
     }
 

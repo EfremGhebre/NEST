@@ -1,0 +1,33 @@
+<main class="auth-page">
+  <div class="auth-wrapper">
+    <section class="auth-header">
+      <h1>NEST</h1>
+      <p>All your Notes, Entertainment, Stories & Thoughts in one place.</p>
+      <i class="fas fa-book-reader auth-icon" aria-hidden="true"></i>
+    </section>
+
+    <section class="auth-card">
+      <div class="auth-switch" role="tablist" aria-label="Authentication mode">
+        <button
+          type="button"
+          class="auth-tab"
+          [class.active]="mode === 'login'"
+          (click)="setMode('login')"
+        >
+          Login
+        </button>
+        <button
+          type="button"
+          class="auth-tab"
+          [class.active]="mode === 'register'"
+          (click)="setMode('register')"
+        >
+          Register
+        </button>
+      </div>
+
+      <app-login *ngIf="mode === 'login'"></app-login>
+      <app-register *ngIf="mode === 'register'"></app-register>
+    </section>
+  </div>
+</main>

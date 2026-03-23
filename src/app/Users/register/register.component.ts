@@ -33,8 +33,8 @@ export class RegisterComponent {
     this.authService.register(name, email, password).subscribe({
       next: (response: any) => {
         console.log('Registration Response:', response);
-        alert('Registration successful! Redirecting to login...');
-        this.router.navigate(['/login']); // Navigate to login page on success
+        alert('Registration successful! Please login with your new account.');
+        this.router.navigate(['/auth']);
       },
       error: (err: any) => {
         console.error('Registration Error:', err);
@@ -49,6 +49,10 @@ export class RegisterComponent {
         }
       },
     });
+  }
+
+  goHome(): void {
+    this.router.navigate(['/']);
   }
 
   // Helper method to validate email format

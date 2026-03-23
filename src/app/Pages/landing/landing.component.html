@@ -1,0 +1,87 @@
+<main class="landing-page">
+  <section class="hero-section">
+    <div class="hero-content">
+      <p class="brand">NEST</p>
+      <h1>Your thoughts, your favorites - all in one place.</h1>
+      <p class="subheadline">
+        NEST - All your Notes, Entertainment, Stories & Thoughts in one place.
+      </p>
+      <i class="fas fa-book-reader app-icon" aria-hidden="true"></i>
+      <div class="hero-actions">
+        <a routerLink="/auth" class="btn btn-primary-action">Get Started</a>
+        <button type="button" class="btn btn-secondary-action" (click)="scrollToContent()">
+          Explore
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section id="landing-content" class="transition-section">
+    <div class="section-shell">
+      <h2>What You Can Save</h2>
+      <div class="save-grid">
+        <article class="feature-card">
+          <i class="fas fa-pen"></i>
+          <p>Notes & thoughts</p>
+        </article>
+        <article class="feature-card">
+          <i class="fas fa-film"></i>
+          <p>Favorite movies & shows</p>
+        </article>
+        <article class="feature-card">
+          <i class="fas fa-quote-left"></i>
+          <p>Quotes you love</p>
+        </article>
+        <article class="feature-card">
+          <i class="fas fa-lightbulb"></i>
+          <p>Ideas & activities</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="why-section">
+    <div class="section-shell">
+      <h2>Why NEST</h2>
+      <ul class="why-list">
+        <li>Everything in one place</li>
+        <li>Simple and distraction-free</li>
+        <li>Easy to organize and revisit</li>
+        <li>Built for everyday life</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="preview-section">
+    <div class="section-shell">
+      <h2>A quick look inside</h2>
+      <div class="preview-wrapper">
+        <article class="preview-card notes-preview">
+          <h3>Notes List</h3>
+          <ul>
+            <li>Morning reflection</li>
+            <li>Weekend plans with friends</li>
+            <li>Books to read this month</li>
+          </ul>
+        </article>
+        <article class="preview-card categories-preview">
+          <h3>Categories</h3>
+          <div class="chips">
+            <span>Movies</span>
+            <span>Quotes</span>
+            <span>Stories</span>
+            <span>Daily Notes</span>
+          </div>
+          <p>Clean cards make it easy to capture and revisit what matters.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="final-cta-section">
+    <div class="section-shell final-cta-shell">
+      <h2>Start organizing your thoughts today</h2>
+      <a routerLink="/auth" class="btn btn-primary-action">Create Account</a>
+    </div>
+  </section>
+</main>

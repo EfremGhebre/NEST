@@ -12,7 +12,7 @@ export const AuthGuard: CanActivateFn = () => {
   // If not authenticated, just redirect to login WITHOUT clearing storage.
   // HMR/full reloads can briefly cause guard to run before storage is ready.
   if (!isAuthed || !userId) {
-    router.navigate(['/login']);
+    router.navigate(['/auth']);
     return false;
   }
   return true;
