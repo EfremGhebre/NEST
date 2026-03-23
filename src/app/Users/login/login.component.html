@@ -1,6 +1,6 @@
 <div class="auth-box">
   <h2 class="auth-title">Login</h2>
-  <form (ngSubmit)="login()" #loginForm="ngForm">
+  <form (ngSubmit)="login()" #loginForm="ngForm" class="auth-form">
     <div class="mb-3">
       <label for="name" class="form-label">Username</label>
       <input
@@ -25,8 +25,8 @@
         placeholder="Enter your password"
       />
     </div>
-    <button type="submit" class="btn btn-success w-100">Get Started</button>
-    <button type="button" class="btn btn-outline-secondary w-100 mt-2" (click)="goHome()">
+    <button type="submit" class="btn btn-success w-100">Login</button>
+    <button type="button" class="back-home-link" (click)="goHome()">
       Back to Home Page
     </button>
   </form>

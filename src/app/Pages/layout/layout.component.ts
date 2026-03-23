@@ -68,7 +68,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userId');
     this.closeNavbarMenu();
-    this.router.navigate(['/auth']);
+    this.router.navigate(['/']);
   }
 
   toggleTheme(): void {

@@ -1,12 +1,15 @@
 <main class="auth-page">
   <div class="auth-wrapper">
     <section class="auth-header">
-      <h1>NEST</h1>
-      <p>All your Notes, Entertainment, Stories & Thoughts in one place.</p>
-      <i class="fas fa-book-reader auth-icon" aria-hidden="true"></i>
+      <div class="brand-content">
+        <h1>NEST</h1>
+        <p>All your Notes, Entertainment, Stories & Thoughts &mdash; in one place.</p>
+        <i class="fas fa-book-reader auth-icon" aria-hidden="true"></i>
+      </div>
     </section>
 
     <section class="auth-card">
+      <h2 class="auth-card-title">{{ mode === 'login' ? 'Welcome back' : 'Create your account' }}</h2>
       <div class="auth-switch" role="tablist" aria-label="Authentication mode">
         <button
           type="button"
