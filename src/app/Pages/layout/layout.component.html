@@ -1,10 +1,16 @@
 <div class="layout-container">
   <nav class="navbar">
     <div class="navbar-brand" (click)="navigateTo('dashboard')">
-      <span style="font-size: 1.5rem; font-weight: 600;"> NEST </span>
+      <span>NEST</span>
     </div>
     <div class="navbar-controls">
-      <button class="navbar-toggler" [class.active]="isNavbarCollapsed" (click)="toggleNavbar()">
+      <button
+        class="navbar-toggler"
+        [class.active]="isNavbarCollapsed"
+        (click)="toggleNavbar()"
+        type="button"
+        aria-label="Toggle navigation menu"
+      >
         <span *ngIf="!isNavbarCollapsed">&#9776;</span>
         <span *ngIf="isNavbarCollapsed">&times;</span>
       </button>
@@ -45,6 +51,7 @@
       </div>
     </div>
   </nav>
+  <div class="mobile-menu-overlay" [class.active]="isNavbarCollapsed" (click)="closeNavbarMenu()"></div>
   <div>
     <router-outlet></router-outlet>
   </div>

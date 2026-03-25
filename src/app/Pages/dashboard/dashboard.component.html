@@ -89,6 +89,8 @@
         class="quick-action-card"
         [class]="'action-' + action.color"
         (click)="navigateTo(action)"
+        role="button"
+        tabindex="0"
       >
         <div class="action-icon">
           <i [class]="action.icon"></i>
@@ -113,7 +115,7 @@
     <div class="recent-activity">
       <div *ngFor="let item of recentItems" class="recent-item">
         <div class="recent-icon" [class]="'recent-' + item.type">
-          <i [class]="item.type === 'book' ? 'bi-book' : 'bi-quote'"></i>
+          <i [class]="item.type === 'book' ? 'bi-book' : item.type === 'quote' ? 'bi-quote' : item.type === 'movie' ? 'bi-film' : item.type === 'diary' ? 'bi-journal-text' : 'bi-activity'"></i>
         </div>
         <div class="recent-content">
           <h5 class="recent-title">{{ item.title }}</h5>

@@ -164,6 +164,7 @@ body[data-theme='dark'] .auth-tab:hover {
 
   .auth-card {
     transform: none;
+    width: 100%;
   }
 
   .auth-header {
@@ -179,5 +180,55 @@ body[data-theme='dark'] .auth-tab:hover {
     margin-inline: auto;
     max-width: 460px;
     font-size: 1.08rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .auth-page {
+    padding: 1rem;
+    align-items: start;
+  }
+
+  .auth-wrapper {
+    max-width: 100%;
+    padding: 0.8rem;
+    border-radius: 18px;
+    gap: 0.8rem;
+  }
+
+  .brand-content {
+    text-align: center;
+    padding: 1.35rem 1rem;
+  }
+
+  .auth-header h1 {
+    font-size: 2.35rem;
+    letter-spacing: 0.05em;
+  }
+
+  .auth-header p {
+    margin-top: 0.7rem;
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  .auth-icon {
+    margin-top: 1.2rem;
+    font-size: 2.4rem;
+  }
+
+  .auth-card {
+    border-radius: 12px;
+    padding: 1rem 0.95rem 1.1rem;
+  }
+
+  .auth-card-title {
+    font-size: 1.2rem;
+    margin-bottom: 0.7rem;
+  }
+
+  .auth-tab {
+    min-height: 44px;
+    font-size: 0.92rem;
   }
 }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../services/theme.service';
@@ -17,6 +17,7 @@ export class LandingComponent implements OnInit, OnDestroy {
   isDropdownOpen = false;
   isLoggedIn = false;
   currentTheme: 'light' | 'dark' = 'light';
+  private readonly mobileBreakpoint = 768;
   private themeSubscription?: Subscription;
 
   readonly quickActions = [
@@ -54,10 +55,12 @@ export class LandingComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.themeSubscription?.unsubscribe();
+    document.body.style.overflow = '';
   }
 
   toggleNavbar(): void {
     this.isNavbarCollapsed = !this.isNavbarCollapsed;
+    this.syncMobileScrollLock();
   }
 
   toggleDropdown(): void {
@@ -68,25 +71,56 @@ export class LandingComponent implements OnInit, OnDestroy {
     this.isDropdownOpen = false;
   }
 
+  closeNavbarMenu(): void {
+    this.isNavbarCollapsed = false;
+    this.closeDropdown();
+    this.syncMobileScrollLock();
+  }
+
   goToAuth(): void {
+    this.closeNavbarMenu();
     this.router.navigate(['/auth']);
   }
 
   goToDashboard(): void {
+    this.closeNavbarMenu();
     this.router.navigate(['/dashboard']);
   }
 
   toggleTheme(): void {
     this.themeService.toggleTheme();
+    this.closeNavbarMenu();
   }
 
   scrollToContent(): void {
+    this.closeNavbarMenu();
     document
       .getElementById('landing-content')
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   openQuickAction(): void {
+    this.closeNavbarMenu();
     this.router.navigate(['/auth']);
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (window.innerWidth >= this.mobileBreakpoint && this.isNavbarCollapsed) {
+      this.closeNavbarMenu();
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.dropdown')) {
+      this.closeDropdown();
+    }
+  }
+
+  private syncMobileScrollLock(): void {
+    const shouldLock = this.isNavbarCollapsed && window.innerWidth < this.mobileBreakpoint;
+    document.body.style.overflow = shouldLock ? 'hidden' : '';
   }
 }
