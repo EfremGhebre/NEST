@@ -8,6 +8,8 @@ NEST is a personal content hub for Books, Quotes, Movies, Diaries, and Activitie
 - CRUD for Books, Quotes, Movies, Diaries, Activities
 - Tags, ratings, status, notes, and metadata
 - Light/dark theme with responsive layouts
+- Mobile-first responsive UI for dashboard, landing, and auth pages
+- Mobile slide-in navigation menu with theme toggle and account actions
 
 ## Tech Stack
 
@@ -52,6 +54,8 @@ npm start
 
 App runs on `http://localhost:4200` and proxies `/api` to the backend via `proxy.conf.json`.
 
+Recommended: use an LTS Node.js version for local development.
+
 ## Production
 
 ### Backend (Render)
@@ -95,3 +99,33 @@ Server:
 
 - `npm run start`: Start API
 - `npm run dev`: Start API with nodemon
+
+## Responsive Design
+
+NEST supports three layout breakpoints:
+
+- Desktop: `> 1024px`
+- Tablet: `768px - 1024px`
+- Mobile: `< 768px`
+
+Implemented responsive behavior includes:
+
+- Single-column flows on mobile for dashboard sections and cards
+- Tablet-optimized 2-column layouts for stats and quick actions
+- Touch-friendly controls with larger tap targets
+- Collapsed mobile navigation with slide-in drawer
+
+## Responsive QA Checklist
+
+Before shipping UI changes, verify:
+
+- No horizontal overflow on small screens
+- Navigation remains fully usable on mobile
+- Spacing and typography remain readable on tablet/mobile
+- Auth forms and CTA buttons stay full-width and easy to tap
+
+Test on:
+
+- iPhone small screen
+- iPhone Pro Max
+- iPad/tablet viewport
