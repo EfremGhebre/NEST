@@ -1,7 +1,13 @@
 <div class="layout-container">
   <nav class="navbar">
     <div class="navbar-brand" (click)="navigateTo('dashboard')">
-      <span>NEST</span>
+      <img
+        class="navbar-logo-img"
+        [class.logo-light]="currentTheme !== 'dark'"
+        [class.logo-dark]="currentTheme === 'dark'"
+        [src]="currentTheme === 'dark' ? 'assets/nest-logo-dark.png' : 'assets/nest-logo-light.png'"
+        alt="NEST logo"
+      />
     </div>
     <div class="navbar-controls">
       <button

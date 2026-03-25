@@ -21,6 +21,8 @@
 }
 
 .navbar-brand {
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
 }
 
@@ -29,6 +31,19 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   color: #fff;
+}
+
+.navbar-logo-img {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  transform: scale(1.08);
+  transform-origin: left center;
+}
+
+.navbar-logo-img.logo-light {
+  transform: scale(1.14);
 }
 
 .navbar-controls {
@@ -401,7 +416,7 @@
 
 .recent-icon {
   width: 40px;
-  height: 40px;
+  height: 44px;
   border-radius: 10px;
   display: grid;
   place-items: center;
@@ -506,13 +521,17 @@ body:is([data-theme='light'], :not([data-theme])) :is(
     padding: 0.5rem 0.64rem;
   }
 
+  .navbar-logo-img {
+    height: 38px;
+  }
+
   .theme-toggle-button {
     width: 40px;
-    min-height: 40px;
+    min-height: 44px;
   }
 
   .login-button {
-    min-height: 40px;
+    min-height: 44px;
     font-size: 0.88rem;
     padding: 0.55rem 0.82rem;
   }
@@ -537,6 +556,10 @@ body:is([data-theme='light'], :not([data-theme])) :is(
 
   .navbar-brand span {
     font-size: 1.2rem;
+  }
+
+  .navbar-logo-img {
+    height: 34px;
   }
 
   .navbar-toggler {

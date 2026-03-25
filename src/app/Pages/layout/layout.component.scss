@@ -23,6 +23,8 @@
 }
 
 .navbar-brand {
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
 
   span {
@@ -31,6 +33,19 @@
     letter-spacing: 0.04em;
     color: #fff;
   }
+}
+
+.navbar-logo-img {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  transform: scale(1.08);
+  transform-origin: left center;
+}
+
+.navbar-logo-img.logo-light {
+  transform: scale(1.14);
 }
 
 .navbar-controls {
@@ -190,6 +205,10 @@
     font-size: 1.25rem;
   }
 
+  .navbar-logo-img {
+    height: 38px;
+  }
+
   .navbar-menu {
     gap: 0.6rem;
   }
@@ -205,11 +224,11 @@
 
   .theme-toggle-button {
     width: 40px;
-    min-height: 40px;
+    min-height: 44px;
   }
 
   .logout-button {
-    min-height: 40px;
+    min-height: 44px;
     padding: 0.55rem 0.8rem;
     font-size: 0.86rem;
   }
@@ -222,6 +241,10 @@
 
   .navbar-brand span {
     font-size: 1.2rem;
+  }
+
+  .navbar-logo-img {
+    height: 34px;
   }
 
   .navbar-toggler {
