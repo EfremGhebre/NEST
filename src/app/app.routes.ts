@@ -14,6 +14,7 @@ import { AuthGuard } from './auth/auth.guard';
 import { LayoutComponent } from './Pages/layout/layout.component';
 import { LandingComponent } from './Pages/landing/landing.component';
 import { AuthPageComponent } from './Pages/auth-page/auth-page.component';
+import { ProfileComponent } from './Pages/profile/profile.component';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -36,7 +37,9 @@ export const routes: Routes = [
         { path: 'activities', component: ActivitiesComponent },
         { path: 'activities-new', component: AddActivityComponent },
         { path: 'add-activity', component: AddActivityComponent },
+        { path: 'profile', component: ProfileComponent },
       ],
     },
+  { path: 'profile', redirectTo: 'layout/profile' },
   { path: '**', redirectTo: '' },
 ];

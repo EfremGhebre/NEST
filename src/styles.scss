@@ -1305,6 +1305,17 @@ body[data-theme="dark"] {
   max-width: 440px;
 }
 
+/* Strong blurred backdrop for expanded collection detail overlays */
+.book-detail-modal,
+.quote-detail-modal,
+.movie-detail-modal,
+.diary-detail-modal,
+.activity-detail-modal {
+  background: rgba(10, 14, 24, 0.62);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
 .confirm-modal .modal-body p {
   margin: 0;
   color: rgba(0, 0, 0, 0.75);

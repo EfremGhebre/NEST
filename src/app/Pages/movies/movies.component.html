@@ -38,8 +38,8 @@
   <div *ngIf="!isLoading && !error && movies.length > 0" class="movies-grid content-grid" [class.rows-layout]="currentLayout === 'rows'">
     <div *ngFor="let movie of movies" 
          class="movie-card" 
-         [class.expanded]="isMovieExpanded(movie.id)"
-         (click)="toggleMovieExpansion(movie.id)">
+         [class.expanded]="selectedMovie?.id === movie.id"
+         (click)="openMovieDetails(movie, $event)">
       <div class="movie-card-body">
         <div class="movie-cover">
           <i class="bi bi-film"></i>
@@ -57,9 +57,9 @@
             </div>
             <div class="movie-actions" (click)="$event.stopPropagation()">
               <button class="action-button expand" 
-                      [title]="isMovieExpanded(movie.id) ? 'Collapse' : 'Expand'"
-                      (click)="toggleMovieExpansion(movie.id, $event)">
-                <i class="bi" [class.bi-chevron-down]="!isMovieExpanded(movie.id)" [class.bi-chevron-up]="isMovieExpanded(movie.id)"></i>
+                      title="View Details"
+                      (click)="openMovieDetails(movie, $event)">
+                <i class="bi bi-arrows-fullscreen"></i>
               </button>
               <button class="action-button edit" (click)="editMovie(movie.id)" title="Edit">
                 <i class="bi bi-pencil"></i>
@@ -75,7 +75,7 @@
               <i class="bi bi-person"></i>
               <span>{{ movie.director }}</span>
             </div>
-            <div class="movie-metrics" *ngIf="isMovieExpanded(movie.id)">
+            <div class="movie-metrics">
               <span *ngIf="movie.releaseYear" class="movie-metric">
                 <i class="bi bi-calendar3"></i>
                 {{ movie.releaseYear }}
@@ -87,19 +87,8 @@
             </div>
           </div>
           
-          <div class="movie-description" *ngIf="isMovieExpanded(movie.id)">
-            <p>{{ movie.description }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Expanded Content -->
-      <div class="movie-details" *ngIf="isMovieExpanded(movie.id)">
-        <div class="detail-row" *ngIf="movie.notes">
-          <i class="bi bi-sticky"></i>
-          <div class="notes-content">
-            <span class="detail-label">Notes:</span>
-            <p class="detail-value notes">{{ movie.notes }}</p>
+          <div class="movie-description">
+            <p>{{ truncateText(movie.description, 180) }}</p>
           </div>
         </div>
       </div>
@@ -109,6 +98,50 @@
   <!-- Results Count -->
   <div *ngIf="!isLoading && !error && movies.length > 0" class="results-info">
     <p>Showing {{ movies.length }} movie{{ movies.length === 1 ? '' : 's' }}</p>
+  </div>
+
+  <div class="modal confirm-modal movie-detail-modal" *ngIf="selectedMovie" (click)="closeMovieDetails()" (keydown)="onMovieDetailKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Movie details" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ selectedMovie.title }}</h3>
+        <button class="close-modal" (click)="closeMovieDetails()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-row">
+          <i class="bi bi-person"></i>
+          <span class="detail-label">Director:</span>
+          <span class="detail-value">{{ selectedMovie.director }}</span>
+        </div>
+        <div class="detail-row">
+          <i class="bi bi-info-circle"></i>
+          <span class="detail-label">Description:</span>
+          <span class="detail-value">{{ selectedMovie.description }}</span>
+        </div>
+        <div class="detail-row" *ngIf="selectedMovie.genre">
+          <i class="bi bi-bookmark"></i>
+          <span class="detail-label">Genre:</span>
+          <span class="detail-value">{{ selectedMovie.genre }}</span>
+        </div>
+        <div class="detail-row" *ngIf="selectedMovie.releaseYear">
+          <i class="bi bi-calendar3"></i>
+          <span class="detail-label">Release Year:</span>
+          <span class="detail-value">{{ selectedMovie.releaseYear }}</span>
+        </div>
+        <div class="detail-row" *ngIf="selectedMovie.rating">
+          <i class="bi bi-star"></i>
+          <span class="detail-label">Rating:</span>
+          <span class="detail-value">{{ selectedMovie.rating }}/5</span>
+        </div>
+        <div class="detail-row" *ngIf="selectedMovie.notes">
+          <i class="bi bi-sticky"></i>
+          <span class="detail-label">Notes:</span>
+          <span class="detail-value">{{ selectedMovie.notes }}</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeMovieDetails()">Close</button>
+      </div>
+    </div>
   </div>
 
   <!-- Edit Modal -->

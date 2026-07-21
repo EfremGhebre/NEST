@@ -200,11 +200,11 @@
   color: #fff;
 }
 
-.recent-book { background: var(--bnq-primary); }
-.recent-quote { background: var(--bnq-success); }
-.recent-movie { background: #0ea5e9; }
-.recent-diary { background: #f59e0b; }
-.recent-activity { background: #8b5cf6; }
+.recent-icon-book { background: var(--bnq-primary); }
+.recent-icon-quote { background: var(--bnq-success); }
+.recent-icon-movie { background: #0ea5e9; }
+.recent-icon-diary { background: #f59e0b; }
+.recent-icon-activity { background: #8b5cf6; }
 
 .recent-content {
   flex: 1;

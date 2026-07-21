@@ -114,7 +114,7 @@
     </h2>
     <div class="recent-activity">
       <div *ngFor="let item of recentItems" class="recent-item">
-        <div class="recent-icon" [class]="'recent-' + item.type">
+        <div class="recent-icon" [class]="'recent-icon-' + item.type">
           <i [class]="item.type === 'book' ? 'bi-book' : item.type === 'quote' ? 'bi-quote' : item.type === 'movie' ? 'bi-film' : item.type === 'diary' ? 'bi-journal-text' : 'bi-activity'"></i>
         </div>
         <div class="recent-content">

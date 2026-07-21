@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -41,6 +41,8 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   selectedPriority = 'all';
   searchTerm = '';
   expandedActivities = new Set<number>();
+  selectedActivity: Activity | null = null;
+  private lastFocusedElement: HTMLElement | null = null;
   currentLayout: 'columns' | 'rows' = 'columns';
   private layoutSubscription?: Subscription;
   
@@ -86,6 +88,7 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.layoutSubscription?.unsubscribe();
+    document.body.style.overflow = '';
   }
 
   loadActivities(): void {
@@ -286,5 +289,53 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
       return text;
     }
     return text.substring(0, maxLength) + '...';
+  }
+
+  openActivityDetails(activity: Activity, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.lastFocusedElement = document.activeElement as HTMLElement;
+    this.selectedActivity = activity;
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => {
+      const firstFocusable = document.querySelector('.activity-detail-modal .close-modal') as HTMLElement | null;
+      firstFocusable?.focus();
+    });
+  }
+
+  closeActivityDetails(): void {
+    this.selectedActivity = null;
+    document.body.style.overflow = '';
+    this.lastFocusedElement?.focus();
+  }
+
+  onActivityDetailKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+    const container = document.querySelector('.activity-detail-modal .modal-content');
+    if (!container) return;
+    const focusableElements = Array.from(
+      container.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    ).filter(el => !el.hasAttribute('disabled'));
+    if (focusableElements.length === 0) return;
+
+    const first = focusableElements[0];
+    const last = focusableElements[focusableElements.length - 1];
+    const active = document.activeElement as HTMLElement;
+
+    if (!event.shiftKey && active === last) {
+      first.focus();
+      event.preventDefault();
+    } else if (event.shiftKey && active === first) {
+      last.focus();
+      event.preventDefault();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    if (this.selectedActivity) {
+      this.closeActivityDetails();
+    }
   }
 }

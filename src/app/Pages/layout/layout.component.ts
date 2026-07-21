@@ -3,6 +3,7 @@ import { Router, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../services/theme.service';
 import { Subscription } from 'rxjs';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-layout',
@@ -20,7 +21,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -76,10 +78,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userId');
     this.closeNavbarMenu();
-    this.router.navigate(['/']);
+    this.authService.logout();
   }
 
   toggleTheme(): void {

@@ -281,6 +281,15 @@
   animation: slideDown 0.3s ease;
 }
 
+.activity-detail-modal {
+  z-index: 1200;
+}
+
+.activity-detail-modal .modal-content {
+  max-width: 760px;
+  width: min(760px, 94vw);
+}
+
 .status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 12px;

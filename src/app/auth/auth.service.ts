@@ -5,6 +5,8 @@ import { catchError } from 'rxjs/operators';
 import { map, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
+import { UserProfile } from '../models/user-profile';
+import { UserSubscription } from '../models/user-subscription';
 // Small helper to decode JWT payload without external deps
 function decodeJwtPayload<T = unknown>(token: string): T | null {
   try {
@@ -74,7 +76,7 @@ export class AuthService {
           if (response.userId) {
             localStorage.setItem('userId', response.userId);
           }
-          localStorage.setItem('userName', name);
+          localStorage.setItem('userName', response.userName || name);
         }
       }),
       catchError((error) => {
@@ -94,7 +96,7 @@ export class AuthService {
         if (response && response.token) {
           localStorage.setItem('authToken', response.token); //Store token here only
           localStorage.setItem('userId', response.userId); //Store userId here only
-          localStorage.setItem('userName', name);
+          localStorage.setItem('userName', response.userName || name);
         }
       }),
       catchError((error) => {
@@ -124,6 +126,71 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem('authToken'); 
     localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
     this.router.navigate(['/']);
+  }
+
+  getProfile(userId: number): Observable<UserProfile> {
+    const url = `${this.apiUrl}/users/${userId}/profile`;
+    return this.http.get<UserProfile>(url, { headers: this.getAuthHeaders() }).pipe(
+      tap(profile => {
+        if (profile?.username) {
+          localStorage.setItem('userName', profile.username);
+        }
+      }),
+      catchError((error) => {
+        return throwError(() => new Error(error?.error?.message || 'Failed to load profile.'));
+      })
+    );
+  }
+
+  updateProfile(userId: number, payload: Partial<UserProfile>): Observable<UserProfile> {
+    const url = `${this.apiUrl}/users/${userId}/profile`;
+    return this.http.put<UserProfile>(url, payload, { headers: this.getAuthHeaders() }).pipe(
+      tap(profile => {
+        if (profile?.username) {
+          localStorage.setItem('userName', profile.username);
+        }
+      }),
+      catchError((error) => {
+        return throwError(() => new Error(error?.error?.message || 'Failed to update profile.'));
+      })
+    );
+  }
+
+  deleteAccount(userId: number): Observable<void> {
+    const url = `${this.apiUrl}/users/${userId}`;
+    return this.http.delete<void>(url, { headers: this.getAuthHeaders() }).pipe(
+      catchError((error) => {
+        return throwError(() => new Error(error?.error?.message || 'Failed to delete account.'));
+      })
+    );
+  }
+
+  getSubscription(userId: number): Observable<UserSubscription | null> {
+    const url = `${this.apiUrl}/users/${userId}/subscription`;
+    return this.http.get<UserSubscription | null>(url, { headers: this.getAuthHeaders() }).pipe(
+      catchError((error) => {
+        return throwError(() => new Error(error?.error?.message || 'Failed to load subscription.'));
+      })
+    );
+  }
+
+  saveSubscription(userId: number, payload: Partial<UserSubscription>): Observable<UserSubscription> {
+    const url = `${this.apiUrl}/users/${userId}/subscription`;
+    return this.http.put<UserSubscription>(url, payload, { headers: this.getAuthHeaders() }).pipe(
+      catchError((error) => {
+        return throwError(() => new Error(error?.error?.message || 'Failed to save subscription.'));
+      })
+    );
+  }
+
+  deleteSubscription(userId: number): Observable<void> {
+    const url = `${this.apiUrl}/users/${userId}/subscription`;
+    return this.http.delete<void>(url, { headers: this.getAuthHeaders() }).pipe(
+      catchError((error) => {
+        return throwError(() => new Error(error?.error?.message || 'Failed to delete subscription.'));
+      })
+    );
   }
 }

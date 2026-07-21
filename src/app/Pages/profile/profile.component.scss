@@ -1,0 +1,97 @@
+.profile-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.profile-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.profile-card {
+  padding: 1.5rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.3rem;
+}
+
+.section-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.profile-fields {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 0.75rem;
+}
+
+.field-label {
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 600;
+}
+
+.field-value {
+  color: rgba(255, 255, 255, 0.95);
+  word-break: break-word;
+}
+
+.danger-card {
+  border-color: rgba(220, 53, 69, 0.45) !important;
+}
+
+.danger-copy {
+  margin: 0 0 1rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.empty-copy {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.success-state {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #9be5a9;
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 1rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section-actions .btn {
+    width: 100%;
+  }
+
+  .field-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}

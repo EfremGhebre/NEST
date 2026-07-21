@@ -49,6 +49,7 @@
           </div>
         </div>
         <div class="nav-actions">
+          <button class="nav-button profile-button" (click)="navigateTo('profile')">Profile</button>
           <button class="theme-toggle-button" (click)="toggleTheme()" [title]="currentTheme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'">
             <i class="bi" [class.bi-sun]="currentTheme === 'light'" [class.bi-moon]="currentTheme === 'dark'"></i>
           </button>

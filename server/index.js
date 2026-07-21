@@ -49,6 +49,10 @@ function normalizeSql(sql) {
   return sql;
 }
 
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+}
+
 async function ensureColumn(table, column, type) {
   if (DB_ENGINE === 'sqlite') {
     const columnName = column.replace(/"/g, '');
@@ -68,8 +72,12 @@ async function initDb() {
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
+        username TEXT UNIQUE,
+        "firstName" TEXT,
+        "lastName" TEXT,
         email TEXT UNIQUE NOT NULL,
-        "passwordHash" TEXT NOT NULL
+        "passwordHash" TEXT NOT NULL,
+        "createdAt" TEXT
       );
 
       CREATE TABLE IF NOT EXISTS books (
@@ -125,14 +133,33 @@ async function initDb() {
         "updatedAt" TEXT,
         FOREIGN KEY("userId") REFERENCES users(id)
       );
+
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        "userId" INTEGER NOT NULL UNIQUE,
+        "planName" TEXT NOT NULL,
+        status TEXT NOT NULL,
+        "startDate" TEXT NOT NULL,
+        "renewalDate" TEXT,
+        "monthlyCost" REAL,
+        "billingCycle" TEXT,
+        notes TEXT,
+        "createdAt" TEXT,
+        "updatedAt" TEXT,
+        FOREIGN KEY("userId") REFERENCES users(id)
+      );
     `);
   } else {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         name TEXT UNIQUE NOT NULL,
+        username TEXT UNIQUE,
+        "firstName" TEXT,
+        "lastName" TEXT,
         email TEXT UNIQUE NOT NULL,
-        "passwordHash" TEXT NOT NULL
+        "passwordHash" TEXT NOT NULL,
+        "createdAt" TEXT
       );
     `);
 
@@ -194,7 +221,34 @@ async function initDb() {
         "updatedAt" TEXT
       );
     `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id SERIAL PRIMARY KEY,
+        "userId" INTEGER NOT NULL UNIQUE REFERENCES users(id),
+        "planName" TEXT NOT NULL,
+        status TEXT NOT NULL,
+        "startDate" TEXT NOT NULL,
+        "renewalDate" TEXT,
+        "monthlyCost" DOUBLE PRECISION,
+        "billingCycle" TEXT,
+        notes TEXT,
+        "createdAt" TEXT,
+        "updatedAt" TEXT
+      );
+    `);
   }
+
+  await ensureColumn('users', 'username', 'TEXT');
+  await ensureColumn('users', '"firstName"', 'TEXT');
+  await ensureColumn('users', '"lastName"', 'TEXT');
+  await ensureColumn('users', '"createdAt"', 'TEXT');
+  await ensureColumn('subscriptions', '"renewalDate"', 'TEXT');
+  await ensureColumn('subscriptions', '"monthlyCost"', DB_ENGINE === 'sqlite' ? 'REAL' : 'DOUBLE PRECISION');
+  await ensureColumn('subscriptions', '"billingCycle"', 'TEXT');
+  await ensureColumn('subscriptions', 'notes', 'TEXT');
+  await ensureColumn('subscriptions', '"createdAt"', 'TEXT');
+  await ensureColumn('subscriptions', '"updatedAt"', 'TEXT');
 
   await ensureColumn('quotes', '"source"', 'TEXT');
   await ensureColumn('quotes', '"category"', 'TEXT');
@@ -223,6 +277,9 @@ async function initDb() {
   await ensureColumn('books', '"tags"', 'TEXT');
   await ensureColumn('books', '"notes"', 'TEXT');
   await ensureColumn('books', '"createdAt"', 'TEXT');
+
+  await dbRun('UPDATE users SET username = name WHERE username IS NULL OR username = \'\'');
+  await dbRun('UPDATE users SET "createdAt" = COALESCE("createdAt", $1) WHERE "createdAt" IS NULL', [new Date().toISOString()]);
 }
 
 function createToken(user) {
@@ -399,17 +456,22 @@ app.post('/api/users/register', async (req, res) => {
   const { name, email, password } = req.body;
   if (!name || !email || !password) return res.status(400).json({ message: 'Missing fields' });
   try {
-    const existing = await dbGet('SELECT id FROM users WHERE name = $1 OR email = $2', [name, email]);
+    const username = String(name).trim();
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const existing = await dbGet('SELECT id FROM users WHERE name = $1 OR username = $2 OR email = $3', [username, username, normalizedEmail]);
     if (existing) return res.status(400).json({ message: 'User already exists.' });
     const passwordHash = bcrypt.hashSync(password, 10);
+    const createdAt = new Date().toISOString();
     const inserted = await dbGet(
-      'INSERT INTO users (name, email, "passwordHash") VALUES ($1, $2, $3) RETURNING id',
-      [name, email, passwordHash]
+      'INSERT INTO users (name, username, email, "passwordHash", "createdAt") VALUES ($1, $2, $3, $4, $5) RETURNING id, username, name',
+      [username, username, normalizedEmail, passwordHash, createdAt]
     );
-    const user = { id: inserted.id, name };
+    const userName = inserted.username || inserted.name || username;
+    const user = { id: inserted.id, name: userName };
     const token = createToken(user);
-    return res.json({ token, userId: user.id });
+    return res.json({ token, userId: user.id, userName });
   } catch (e) {
+    console.error('Register error:', e);
     return res.status(500).json({ message: 'Server error' });
   }
 });
@@ -418,12 +480,198 @@ app.post('/api/users/login', async (req, res) => {
   const { name, password } = req.body;
   if (!name || !password) return res.status(400).json({ message: 'Missing fields' });
   try {
-    const user = await dbGet('SELECT id, name, "passwordHash" FROM users WHERE name = $1', [name]);
+    const identifier = String(name).trim();
+    const normalizedEmail = identifier.toLowerCase();
+    const user = await dbGet(
+      `
+      SELECT id, name, username, email, "passwordHash"
+      FROM users
+      WHERE name = $1
+         OR username = $2
+         OR (email = $3 AND $4 = 1)
+      `,
+      [identifier, identifier, normalizedEmail, isValidEmail(identifier) ? 1 : 0]
+    );
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
     const valid = bcrypt.compareSync(password, user.passwordHash);
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
-    const token = createToken(user);
-    return res.json({ token, userId: user.id });
+    const userName = user.username || user.name;
+    const token = createToken({ id: user.id, name: userName });
+    return res.json({ token, userId: user.id, userName });
+  } catch (e) {
+    console.error('Login error:', e);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.get('/api/users/:userId/profile', authMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
+  try {
+    const user = await dbGet(
+      'SELECT id, username, name, "firstName", "lastName", email, "createdAt" FROM users WHERE id = $1',
+      [userId]
+    );
+    if (!user) return res.status(404).json({ message: 'Not found' });
+    return res.json({
+      id: user.id,
+      username: user.username || user.name,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email,
+      createdAt: user.createdAt || null
+    });
+  } catch (e) {
+    console.error('Save subscription error:', e);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.put('/api/users/:userId/profile', authMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
+  try {
+    const existing = await dbGet(
+      'SELECT id, username, name, "firstName", "lastName", email, "createdAt" FROM users WHERE id = $1',
+      [userId]
+    );
+    if (!existing) return res.status(404).json({ message: 'Not found' });
+
+    const username = req.body.username !== undefined ? String(req.body.username).trim() : (existing.username || existing.name);
+    const firstName = req.body.firstName !== undefined ? String(req.body.firstName).trim() : (existing.firstName || '');
+    const lastName = req.body.lastName !== undefined ? String(req.body.lastName).trim() : (existing.lastName || '');
+    const email = req.body.email !== undefined ? String(req.body.email).trim().toLowerCase() : existing.email;
+
+    if (!username || !email) {
+      return res.status(400).json({ message: 'Missing fields' });
+    }
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Invalid email address' });
+    }
+
+    const duplicate = await dbGet(
+      'SELECT id FROM users WHERE (username = $1 OR name = $2 OR email = $3) AND id <> $4',
+      [username, username, email, userId]
+    );
+    if (duplicate) {
+      return res.status(400).json({ message: 'User already exists.' });
+    }
+
+    await dbRun(
+      'UPDATE users SET username = $1, name = $2, "firstName" = $3, "lastName" = $4, email = $5 WHERE id = $6',
+      [username, username, firstName || null, lastName || null, email, userId]
+    );
+
+    const updated = await dbGet(
+      'SELECT id, username, name, "firstName", "lastName", email, "createdAt" FROM users WHERE id = $1',
+      [userId]
+    );
+
+    return res.json({
+      id: updated.id,
+      username: updated.username || updated.name,
+      firstName: updated.firstName || '',
+      lastName: updated.lastName || '',
+      email: updated.email,
+      createdAt: updated.createdAt || null
+    });
+  } catch (e) {
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.delete('/api/users/:userId', authMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
+  try {
+    const existing = await dbGet('SELECT id FROM users WHERE id = $1', [userId]);
+    if (!existing) return res.status(404).json({ message: 'Not found' });
+    await dbRun('DELETE FROM subscriptions WHERE "userId" = $1', [userId]);
+    await dbRun('DELETE FROM books WHERE "userId" = $1', [userId]);
+    await dbRun('DELETE FROM quotes WHERE "userId" = $1', [userId]);
+    await dbRun('DELETE FROM movies WHERE "userId" = $1', [userId]);
+    await dbRun('DELETE FROM diaries WHERE "userId" = $1', [userId]);
+    await dbRun('DELETE FROM activities WHERE "userId" = $1', [userId]);
+    await dbRun('DELETE FROM users WHERE id = $1', [userId]);
+    return res.status(204).send();
+  } catch (e) {
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.get('/api/users/:userId/subscription', authMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
+  try {
+    const subscription = await dbGet('SELECT * FROM subscriptions WHERE "userId" = $1', [userId]);
+    if (!subscription) return res.json(null);
+    return res.json(subscription);
+  } catch (e) {
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.put('/api/users/:userId/subscription', authMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
+  const { planName, status, startDate, renewalDate, monthlyCost, billingCycle, notes } = req.body;
+  if (!planName || !status || !startDate) return res.status(400).json({ message: 'Missing fields' });
+
+  try {
+    const now = new Date().toISOString();
+    const existing = await dbGet('SELECT id FROM subscriptions WHERE "userId" = $1', [userId]);
+    if (existing) {
+      await dbRun(
+        `
+        UPDATE subscriptions
+        SET "planName" = $1, status = $2, "startDate" = $3, "renewalDate" = $4, "monthlyCost" = $5, "billingCycle" = $6, notes = $7, "updatedAt" = $8
+        WHERE "userId" = $9
+        `,
+        [
+          String(planName).trim(),
+          String(status).trim(),
+          startDate,
+          renewalDate || null,
+          monthlyCost !== undefined && monthlyCost !== null && monthlyCost !== '' ? Number(monthlyCost) : null,
+          billingCycle || null,
+          notes || null,
+          now,
+          userId
+        ]
+      );
+    } else {
+      await dbRun(
+        `
+        INSERT INTO subscriptions ("userId", "planName", status, "startDate", "renewalDate", "monthlyCost", "billingCycle", notes, "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `,
+        [
+          userId,
+          String(planName).trim(),
+          String(status).trim(),
+          startDate,
+          renewalDate || null,
+          monthlyCost !== undefined && monthlyCost !== null && monthlyCost !== '' ? Number(monthlyCost) : null,
+          billingCycle || null,
+          notes || null,
+          now,
+          now
+        ]
+      );
+    }
+    const saved = await dbGet('SELECT * FROM subscriptions WHERE "userId" = $1', [userId]);
+    return res.json(saved);
+  } catch (e) {
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.delete('/api/users/:userId/subscription', authMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  if (Number(userId) !== Number(req.user.id)) return res.status(403).json({ message: 'Forbidden' });
+  try {
+    await dbRun('DELETE FROM subscriptions WHERE "userId" = $1', [userId]);
+    return res.status(204).send();
   } catch (e) {
     return res.status(500).json({ message: 'Server error' });
   }
@@ -864,6 +1112,10 @@ async function start() {
   }
 }
 
-start();
+if (require.main === module) {
+  start();
+}
+
+module.exports = { app, start, initDb };
 
 

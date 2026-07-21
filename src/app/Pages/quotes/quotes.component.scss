@@ -239,6 +239,15 @@
   animation: slideDown 0.3s ease;
 }
 
+.quote-detail-modal {
+  z-index: 1200;
+}
+
+.quote-detail-modal .modal-content {
+  max-width: 760px;
+  width: min(760px, 94vw);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .quotes-container {
