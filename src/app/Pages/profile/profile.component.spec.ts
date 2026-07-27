@@ -43,4 +43,11 @@ describe('ProfileComponent', () => {
     component.cancelEditProfile();
     expect(component.isEditingProfile).toBeFalse();
   });
+
+  it('should close delete confirmation on escape', () => {
+    component.confirmDeleteAccount();
+    expect(component.showDeleteConfirm).toBeTrue();
+    component.onEscapePressed();
+    expect(component.showDeleteConfirm).toBeFalse();
+  });
 });

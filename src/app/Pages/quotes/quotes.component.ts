@@ -6,6 +6,7 @@ import { QuoteserviceService } from '../../services/quoteservice.service';
 import { Quote } from '../../models/quote';
 import { ThemeService } from '../../services/theme.service';
 import { Subscription } from 'rxjs';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-quotes',
@@ -32,16 +33,18 @@ export class QuotesComponent implements OnInit, OnDestroy {
   modalVisible = false;
   deleteTarget: Quote | null = null;
   isCompactMode = false;
-  expandedQuotes = new Set<number>();
   selectedQuote: Quote | null = null;
   private lastFocusedElement: HTMLElement | null = null;
+  private lastDialogTriggerElement: HTMLElement | null = null;
+  actionMenuForQuoteId: number | null = null;
   currentLayout: 'columns' | 'rows' = 'columns';
   private layoutSubscription?: Subscription;
 
   constructor(
     private quoteService: QuoteserviceService, 
     private router: Router,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -141,16 +144,21 @@ export class QuotesComponent implements OnInit, OnDestroy {
           }
         }
         this.quotes = this.quotes.map((q) => (q.id === this.editingQuoteId ? updatedQuote : q));
+        this.toastService.success('Quote updated.');
         this.closeModal();
       },
-      error: () => alert('Failed to update quote.')
+      error: () => this.toastService.error('Failed to update quote.')
     });
   }
 
   deleteQuote(id: number): void {
     this.quotes = this.quotes.filter((q) => q.id !== id);
     this.quoteService.deleteQuote(id).subscribe({
-      error: () => this.loadUserQuotes()
+      next: () => this.toastService.success('Quote deleted.'),
+      error: () => {
+        this.toastService.error('Failed to delete quote.');
+        this.loadUserQuotes();
+      }
     });
   }
 
@@ -158,21 +166,30 @@ export class QuotesComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
+    this.closeActionMenu();
+    this.lastDialogTriggerElement = document.activeElement as HTMLElement;
     this.deleteTarget = quote;
+    setTimeout(() => this.focusFirstDialogControl('.confirm-modal .modal-content'));
   }
 
   confirmDelete(): void {
     if (!this.deleteTarget) return;
     const quoteId = this.deleteTarget.id;
     this.deleteTarget = null;
+    this.restoreDialogTriggerFocus();
     this.deleteQuote(quoteId);
   }
 
   cancelDelete(): void {
     this.deleteTarget = null;
+    this.restoreDialogTriggerFocus();
   }
 
-  openModal(): void { this.modalVisible = true; }
+  openModal(): void {
+    this.lastDialogTriggerElement = document.activeElement as HTMLElement;
+    this.modalVisible = true;
+    setTimeout(() => this.focusFirstDialogControl('#modal .modal-content'));
+  }
   closeModal(): void {
     this.modalVisible = false;
     this.editingQuoteId = null;
@@ -184,6 +201,7 @@ export class QuotesComponent implements OnInit, OnDestroy {
     this.editDate = '';
     this.editTags = '';
     this.editNotes = '';
+    this.restoreDialogTriggerFocus();
   }
 
   toggleCompactMode(): void {
@@ -191,19 +209,13 @@ export class QuotesComponent implements OnInit, OnDestroy {
     localStorage.setItem('bnq_view_quotes', this.isCompactMode ? 'compact' : 'normal');
   }
 
-  toggleQuoteExpansion(quoteId: number, event?: Event): void {
-    if (event) {
-      event.stopPropagation();
-    }
-    if (this.expandedQuotes.has(quoteId)) {
-      this.expandedQuotes.delete(quoteId);
-    } else {
-      this.expandedQuotes.add(quoteId);
-    }
+  toggleActionMenu(quoteId: number, event: Event): void {
+    event.stopPropagation();
+    this.actionMenuForQuoteId = this.actionMenuForQuoteId === quoteId ? null : quoteId;
   }
 
-  isQuoteExpanded(quoteId: number): boolean {
-    return this.expandedQuotes.has(quoteId);
+  closeActionMenu(): void {
+    this.actionMenuForQuoteId = null;
   }
 
   truncateText(text: string, maxLength: number = 150): string {
@@ -217,25 +229,67 @@ export class QuotesComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    this.lastFocusedElement = document.activeElement as HTMLElement;
+    this.closeActionMenu();
+    if (this.selectedQuote?.id === quote.id) {
+      this.closeQuoteDetails();
+      return;
+    }
+    this.lastFocusedElement = (event?.currentTarget as HTMLElement) || document.activeElement as HTMLElement;
     this.selectedQuote = quote;
     document.body.style.overflow = 'hidden';
-    setTimeout(() => {
-      const firstFocusable = document.querySelector('.quote-detail-modal .close-modal') as HTMLElement | null;
-      firstFocusable?.focus();
-    });
   }
 
   closeQuoteDetails(): void {
     this.selectedQuote = null;
+    this.closeActionMenu();
     document.body.style.overflow = '';
     this.lastFocusedElement?.focus();
   }
 
-  onQuoteDetailKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Tab') return;
-    const container = document.querySelector('.quote-detail-modal .modal-content');
+  onModalKeydown(event: KeyboardEvent): void {
+    this.trapFocusWithinModal(event);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    if (this.selectedQuote) {
+      this.closeQuoteDetails();
+      return;
+    }
+    if (this.modalVisible) {
+      this.closeModal();
+      return;
+    }
+    if (this.deleteTarget) {
+      this.cancelDelete();
+      return;
+    }
+    if (this.actionMenuForQuoteId !== null) {
+      this.closeActionMenu();
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.card-actions-menu')) {
+      this.closeActionMenu();
+    }
+  }
+
+  private focusFirstDialogControl(containerSelector: string): void {
+    const container = document.querySelector(containerSelector);
     if (!container) return;
+    const focusable = container.querySelector<HTMLElement>('button, input, select, textarea, [href], [tabindex]:not([tabindex="-1"])');
+    focusable?.focus();
+  }
+
+  private trapFocusWithinModal(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+    const target = event.target as HTMLElement | null;
+    const container = target?.closest('.modal-content');
+    if (!container) return;
+
     const focusableElements = Array.from(
       container.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
     ).filter(el => !el.hasAttribute('disabled'));
@@ -254,10 +308,9 @@ export class QuotesComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('document:keydown.escape')
-  onEscapePressed(): void {
-    if (this.selectedQuote) {
-      this.closeQuoteDetails();
-    }
+  private restoreDialogTriggerFocus(): void {
+    if (!this.lastDialogTriggerElement) return;
+    this.lastDialogTriggerElement.focus();
+    this.lastDialogTriggerElement = null;
   }
 }

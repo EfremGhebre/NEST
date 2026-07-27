@@ -4,6 +4,12 @@
 
 .landing-page {
   min-height: 100vh;
+  background: var(--color-app-background);
+  color: var(--color-text-primary);
+  scroll-behavior: smooth;
+  background-image:
+    radial-gradient(1200px 520px at 12% -12%, color-mix(in srgb, var(--color-primary) 9%, transparent), transparent 62%),
+    radial-gradient(900px 420px at 88% -18%, color-mix(in srgb, #6f8dff 8%, transparent), transparent 64%);
 }
 
 .navbar {
@@ -13,11 +19,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #fff;
-  padding: 1rem 1.5rem;
-  backdrop-filter: blur(8px);
-  background: rgba(15, 23, 42, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--color-text-primary);
+  padding-block: 1rem;
+  padding-inline: clamp(1rem, 3vw, 2rem);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface) 86%, transparent) 0%,
+      color-mix(in srgb, var(--color-surface) 72%, transparent) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+  border-radius: 0;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  box-shadow:
+    0 10px 24px color-mix(in srgb, #0b1220 12%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 50%, transparent);
 }
 
 .navbar-brand {
@@ -80,14 +100,14 @@
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: 0.95rem;
   padding: 0.58rem 0.85rem;
   cursor: pointer;
 }
 
 .nav-button:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--color-surface-hover);
 }
 
 .theme-toggle-button,
@@ -100,24 +120,24 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
   cursor: pointer;
 }
 
 .login-button {
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: transparent;
-  color: #fff;
+  border: 1px solid var(--color-primary-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
   padding: 0.62rem 0.95rem;
   cursor: pointer;
 }
 
 .login-button:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--color-surface-hover);
 }
 
 .dropdown {
@@ -199,7 +219,7 @@
 
 .section-title {
   margin: 0 0 1rem;
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: 1.45rem;
   font-weight: 600;
   display: flex;
@@ -212,10 +232,9 @@
 .recent-activity,
 .inspiration-card,
 .final-cta {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 20px color-mix(in srgb, #121625 8%, transparent);
 }
 
 .welcome-section {
@@ -229,8 +248,21 @@
 
 .hero-card {
   background:
-    linear-gradient(135deg, rgba(76, 175, 80, 0.26), rgba(30, 144, 255, 0.18)),
-    rgba(255, 255, 255, 0.12);
+    linear-gradient(135deg, rgba(119, 87, 214, 0.08), rgba(77, 119, 216, 0.08)),
+    var(--color-surface);
+}
+
+:host-context(body[data-theme='dark']) .navbar {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface) 74%, transparent) 0%,
+      color-mix(in srgb, var(--color-surface) 62%, transparent) 100%
+    );
+  border-color: color-mix(in srgb, var(--color-border) 56%, transparent);
+  box-shadow:
+    0 12px 30px color-mix(in srgb, #000000 32%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 14%, transparent);
 }
 
 .welcome-content {
@@ -239,14 +271,14 @@
 
 .welcome-title {
   margin: 0 0 0.45rem;
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: clamp(2rem, 4vw, 2.7rem);
   line-height: 1.15;
 }
 
 .hero-headline {
   margin: 0;
-  color: rgba(255, 255, 255, 0.94);
+  color: var(--color-text-primary);
   font-size: clamp(1.08rem, 2.5vw, 1.22rem);
   line-height: 1.5;
   max-width: 32ch;
@@ -254,7 +286,7 @@
 
 .welcome-subtitle {
   margin: 0.55rem 0 0;
-  color: rgba(255, 255, 255, 0.84);
+  color: var(--color-text-secondary);
   line-height: 1.6;
   max-width: 60ch;
 }
@@ -281,7 +313,7 @@
   min-height: 44px;
   border: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-text-secondary);
   text-decoration: underline;
   padding: 0.55rem 0;
   cursor: pointer;
@@ -289,7 +321,7 @@
 
 .welcome-illustration {
   margin-left: 1.5rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--color-primary);
   font-size: 3.5rem;
 }
 
@@ -319,13 +351,13 @@
 
 .stat-number {
   margin: 0 0 0.2rem;
-  color: rgba(255, 255, 255, 0.96);
+  color: var(--color-text-primary);
   font-size: 1.08rem;
 }
 
 .stat-label {
   margin: 0;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
 }
 
@@ -382,19 +414,19 @@
 
 .action-title {
   margin: 0 0 0.15rem;
-  color: rgba(255, 255, 255, 0.96);
+  color: var(--color-text-primary);
   font-size: 1rem;
 }
 
 .action-description {
   margin: 0;
-  color: rgba(255, 255, 255, 0.84);
+  color: var(--color-text-secondary);
   font-size: 0.87rem;
   line-height: 1.35;
 }
 
 .action-arrow {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--color-text-muted);
 }
 
 .recent-activity {
@@ -407,7 +439,7 @@
   align-items: center;
   gap: 0.85rem;
   padding: 0.9rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .recent-item:last-child {
@@ -432,18 +464,18 @@
 
 .recent-title {
   margin: 0 0 0.2rem;
-  color: rgba(255, 255, 255, 0.96);
+  color: var(--color-text-primary);
   font-size: 1rem;
 }
 
 .recent-author {
   margin: 0;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--color-text-secondary);
   font-size: 0.88rem;
 }
 
 .recent-date {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--color-text-muted);
   font-size: 0.82rem;
   white-space: nowrap;
 }
@@ -455,20 +487,20 @@
 }
 
 .inspiration-quote i {
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--color-primary);
   font-size: 1.7rem;
 }
 
 .inspiration-quote p {
   margin: 0.7rem auto;
-  color: #fff;
+  color: var(--color-text-primary);
   max-width: 60ch;
   font-size: 1.08rem;
   line-height: 1.75;
 }
 
 .inspiration-quote cite {
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--color-text-secondary);
   font-style: normal;
 }
 
@@ -480,10 +512,39 @@
 
 .final-cta p {
   margin: 0 0 0.75rem;
-  color: rgba(255, 255, 255, 0.96);
+  color: var(--color-text-primary);
 }
 
-body[data-theme='light'] :is(
+:host-context(body[data-theme='light']) .navbar,
+:host-context(body:not([data-theme])) .navbar {
+  background: var(--color-surface);
+  border-bottom-color: var(--color-border);
+  backdrop-filter: none;
+  color: var(--color-text-primary);
+}
+
+:host-context(body[data-theme='light']) :is(.nav-button, .theme-toggle-button, .login-button),
+:host-context(body:not([data-theme])) :is(.nav-button, .theme-toggle-button, .login-button) {
+  color: var(--color-text-primary);
+}
+
+:host-context(body[data-theme='light']) :is(.nav-button:hover, .theme-toggle-button:hover, .login-button:hover),
+:host-context(body:not([data-theme])) :is(.nav-button:hover, .theme-toggle-button:hover, .login-button:hover) {
+  background: var(--color-surface-hover);
+}
+
+:host-context(body[data-theme='light']) .theme-toggle-button,
+:host-context(body:not([data-theme])) .theme-toggle-button {
+  border-color: var(--color-border);
+  background: var(--color-surface-secondary);
+}
+
+:host-context(body[data-theme='light']) .login-button,
+:host-context(body:not([data-theme])) .login-button {
+  border-color: var(--color-primary-border);
+}
+
+:host-context(body[data-theme='light']) :is(
   .section-title,
   .hero-headline,
   .welcome-subtitle,
@@ -494,12 +555,34 @@ body[data-theme='light'] :is(
   .recent-date,
   .inspiration-quote p,
   .inspiration-quote cite,
-  .final-cta p
+  .final-cta p,
+  .welcome-title,
+  .action-title,
+  .action-description
 ) {
-  color: #0f172a;
+  color: var(--color-text-primary);
 }
 
-body:is([data-theme='light'], :not([data-theme])) :is(
+:host-context(body:not([data-theme])) :is(
+  .section-title,
+  .hero-headline,
+  .welcome-subtitle,
+  .stat-number,
+  .stat-label,
+  .recent-title,
+  .recent-author,
+  .recent-date,
+  .inspiration-quote p,
+  .inspiration-quote cite,
+  .final-cta p,
+  .welcome-title,
+  .action-title,
+  .action-description
+) {
+  color: var(--color-text-primary);
+}
+
+:host-context(body[data-theme='light']) :is(
   .welcome-section,
   .stat-card,
   .quick-action-card,
@@ -507,8 +590,39 @@ body:is([data-theme='light'], :not([data-theme])) :is(
   .inspiration-card,
   .final-cta
 ) {
-  background: rgba(255, 255, 255, 0.45);
-  border-color: rgba(15, 23, 42, 0.12);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  box-shadow: 0 2px 8px rgba(20, 20, 30, 0.05);
+  backdrop-filter: none;
+}
+
+:host-context(body:not([data-theme])) :is(
+  .welcome-section,
+  .stat-card,
+  .quick-action-card,
+  .recent-activity,
+  .inspiration-card,
+  .final-cta
+) {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  box-shadow: 0 2px 8px rgba(20, 20, 30, 0.05);
+  backdrop-filter: none;
+}
+
+:host-context(body[data-theme='light']) .hero-card,
+:host-context(body:not([data-theme])) .hero-card {
+  background: linear-gradient(135deg, rgba(119, 87, 214, 0.08), rgba(77, 119, 216, 0.08)), var(--color-surface);
+}
+
+:host-context(body[data-theme='light']) :is(.stat-icon, .action-icon, .recent-icon),
+:host-context(body:not([data-theme])) :is(.stat-icon, .action-icon, .recent-icon) {
+  color: #fff;
+}
+
+:host-context(body[data-theme='light']) .explore-link,
+:host-context(body:not([data-theme])) .explore-link {
+  color: var(--color-text-secondary);
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
@@ -551,7 +665,9 @@ body:is([data-theme='light'], :not([data-theme])) :is(
 
 @media (max-width: 767px) {
   .navbar {
-    padding: 0.85rem 1rem;
+    padding-block: 0.85rem;
+    padding-inline: clamp(0.85rem, 4vw, 1.15rem);
+    width: 100%;
   }
 
   .navbar-brand span {

@@ -17,26 +17,6 @@
       <div class="navbar-menu" [class.active]="isNavbarCollapsed">
         <div class="navbar-links">
           <button *ngIf="isLoggedIn" class="nav-button" (click)="goToDashboard()">Dashboard</button>
-          <div class="dropdown">
-            <button class="nav-button dropdown-toggle" (click)="toggleDropdown()">
-              Collections
-              <i class="bi bi-chevron-down" [class.rotated]="isDropdownOpen"></i>
-            </button>
-            <div class="dropdown-menu" [class.show]="isDropdownOpen">
-              <button class="dropdown-item" (click)="goToAuth(); closeDropdown()">
-                <i class="bi bi-book"></i> Notes
-              </button>
-              <button class="dropdown-item" (click)="goToAuth(); closeDropdown()">
-                <i class="bi bi-quote"></i> Quotes
-              </button>
-              <button class="dropdown-item" (click)="goToAuth(); closeDropdown()">
-                <i class="bi bi-film"></i> Movies
-              </button>
-              <button class="dropdown-item" (click)="goToAuth(); closeDropdown()">
-                <i class="bi bi-activity"></i> Activities
-              </button>
-            </div>
-          </div>
         </div>
         <div class="nav-actions">
           <button

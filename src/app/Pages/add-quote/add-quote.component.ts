@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { QuoteserviceService } from '../../services/quoteservice.service';
 import { Quote } from '../../models/quote';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-add-quote',
@@ -37,7 +38,8 @@ export class AddQuoteComponent {
 
   constructor(
     private quoteService: QuoteserviceService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {}
 
   onSubmit(): void {
@@ -71,10 +73,12 @@ export class AddQuoteComponent {
 
     this.quoteService.addQuote(quote).subscribe({
       next: () => {
+        this.toastService.success('Quote created.');
         this.router.navigate(['/layout/quotes']);
       },
       error: () => {
         this.error = 'Failed to add quote. Please try again.';
+        this.toastService.error(this.error);
         this.loading = false;
       }
     });

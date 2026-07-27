@@ -34,65 +34,95 @@
     <p>Start building your movie collection!</p>
   </div>
 
-  <!-- Movies Grid -->
-  <div *ngIf="!isLoading && !error && movies.length > 0" class="movies-grid content-grid" [class.rows-layout]="currentLayout === 'rows'">
-    <div *ngFor="let movie of movies" 
-         class="movie-card" 
-         [class.expanded]="selectedMovie?.id === movie.id"
-         (click)="openMovieDetails(movie, $event)">
-      <div class="movie-card-body">
-        <div class="movie-cover">
-          <i class="bi bi-film"></i>
-          <span class="movie-cover-letter">{{ movie.title.charAt(0) }}</span>
+  <!-- Notebook List -->
+  <div *ngIf="!isLoading && !error && movies.length > 0" class="movies-grid">
+    <article
+      *ngFor="let movie of movies"
+      class="movie-card"
+      (click)="openMovieDetails(movie, $event)"
+      tabindex="0"
+      (keydown.enter)="openMovieDetails(movie, $event)"
+    >
+      <div class="movie-header">
+        <div class="movie-heading">
+          <span class="movie-icon"><i class="bi bi-film"></i></span>
+          <div>
+            <h3 class="movie-title">{{ movie.title }}</h3>
+            <div class="movie-meta">
+              <span class="movie-type">Movie</span>
+              <span *ngIf="movie.genre" class="movie-genre">{{ movie.genre }}</span>
+            </div>
+          </div>
         </div>
-
-        <div class="movie-info">
-          <div class="movie-header">
-            <div class="movie-title-section">
-              <h3 class="movie-title">{{ movie.title }}</h3>
-              <div class="movie-meta">
-                <span class="movie-type">Movie</span>
-                <span *ngIf="movie.genre" class="movie-genre">{{ movie.genre }}</span>
-              </div>
-            </div>
-            <div class="movie-actions" (click)="$event.stopPropagation()">
-              <button class="action-button expand" 
-                      title="View Details"
-                      (click)="openMovieDetails(movie, $event)">
-                <i class="bi bi-arrows-fullscreen"></i>
-              </button>
-              <button class="action-button edit" (click)="editMovie(movie.id)" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="action-button delete" (click)="requestDelete(movie, $event)" title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-
-          <div class="movie-summary">
-            <div class="movie-director">
-              <i class="bi bi-person"></i>
-              <span>{{ movie.director }}</span>
-            </div>
-            <div class="movie-metrics">
-              <span *ngIf="movie.releaseYear" class="movie-metric">
-                <i class="bi bi-calendar3"></i>
-                {{ movie.releaseYear }}
-              </span>
-              <span *ngIf="movie.rating" class="movie-metric">
-                <i class="bi bi-star-fill"></i>
-                {{ movie.rating }}/5
-              </span>
-            </div>
-          </div>
-          
-          <div class="movie-description">
-            <p>{{ truncateText(movie.description, 180) }}</p>
+        <div class="movie-actions card-actions-menu" (click)="$event.stopPropagation()">
+          <button class="action-button more" (click)="toggleActionMenu(movie.id, $event)" title="More actions" aria-label="More actions">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="action-menu" *ngIf="actionMenuForMovieId === movie.id">
+            <button type="button" (click)="editMovie(movie.id)">
+              <i class="bi bi-pencil"></i>
+              Edit
+            </button>
+            <button type="button" (click)="requestDelete(movie, $event)">
+              <i class="bi bi-trash"></i>
+              Delete
+            </button>
           </div>
         </div>
       </div>
-    </div>
+
+      <p class="movie-preview">{{ truncateText(movie.description, 220) }}</p>
+    </article>
+  </div>
+
+  <div class="movie-overlay" *ngIf="selectedMovie" (click)="closeMovieDetails()">
+    <article class="movie-panel" role="dialog" aria-modal="true" aria-label="Movie details" (click)="$event.stopPropagation()">
+      <div class="movie-header">
+        <div class="movie-heading">
+          <span class="movie-icon"><i class="bi bi-film"></i></span>
+          <div>
+            <h3 class="movie-title">{{ selectedMovie.title }}</h3>
+            <div class="movie-meta">
+              <span class="movie-type">Movie</span>
+              <span *ngIf="selectedMovie.genre" class="movie-genre">{{ selectedMovie.genre }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="movie-actions card-actions-menu" (click)="$event.stopPropagation()">
+          <button class="action-button more" (click)="toggleActionMenu(selectedMovie.id, $event)" title="More actions" aria-label="More actions">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="action-menu" *ngIf="actionMenuForMovieId === selectedMovie.id">
+            <button type="button" (click)="editMovie(selectedMovie.id)">
+              <i class="bi bi-pencil"></i>
+              Edit
+            </button>
+            <button type="button" (click)="requestDelete(selectedMovie, $event)">
+              <i class="bi bi-trash"></i>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p class="movie-preview">{{ selectedMovie.description }}</p>
+
+      <section class="movie-expanded">
+        <div class="detail-grid">
+          <p><strong>Director:</strong> {{ selectedMovie.director }}</p>
+          <p *ngIf="selectedMovie.releaseYear"><strong>Release Year:</strong> {{ selectedMovie.releaseYear }}</p>
+          <p *ngIf="selectedMovie.genre"><strong>Genre:</strong> {{ selectedMovie.genre }}</p>
+          <p *ngIf="selectedMovie.rating"><strong>Rating:</strong> {{ selectedMovie.rating }}/5</p>
+          <p *ngIf="selectedMovie.notes"><strong>Notes:</strong> {{ selectedMovie.notes }}</p>
+          <p><strong>Description:</strong> {{ selectedMovie.description }}</p>
+        </div>
+        <div class="expanded-actions">
+          <button class="btn btn-secondary" (click)="closeMovieDetails()">Collapse</button>
+          <button class="btn btn-primary" (click)="editMovie(selectedMovie.id)">Edit</button>
+          <button class="btn btn-danger" (click)="requestDelete(selectedMovie, $event)">Delete</button>
+        </div>
+      </section>
+    </article>
   </div>
 
   <!-- Results Count -->
@@ -100,53 +130,9 @@
     <p>Showing {{ movies.length }} movie{{ movies.length === 1 ? '' : 's' }}</p>
   </div>
 
-  <div class="modal confirm-modal movie-detail-modal" *ngIf="selectedMovie" (click)="closeMovieDetails()" (keydown)="onMovieDetailKeydown($event)">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Movie details" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ selectedMovie.title }}</h3>
-        <button class="close-modal" (click)="closeMovieDetails()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="detail-row">
-          <i class="bi bi-person"></i>
-          <span class="detail-label">Director:</span>
-          <span class="detail-value">{{ selectedMovie.director }}</span>
-        </div>
-        <div class="detail-row">
-          <i class="bi bi-info-circle"></i>
-          <span class="detail-label">Description:</span>
-          <span class="detail-value">{{ selectedMovie.description }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedMovie.genre">
-          <i class="bi bi-bookmark"></i>
-          <span class="detail-label">Genre:</span>
-          <span class="detail-value">{{ selectedMovie.genre }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedMovie.releaseYear">
-          <i class="bi bi-calendar3"></i>
-          <span class="detail-label">Release Year:</span>
-          <span class="detail-value">{{ selectedMovie.releaseYear }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedMovie.rating">
-          <i class="bi bi-star"></i>
-          <span class="detail-label">Rating:</span>
-          <span class="detail-value">{{ selectedMovie.rating }}/5</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedMovie.notes">
-          <i class="bi bi-sticky"></i>
-          <span class="detail-label">Notes:</span>
-          <span class="detail-value">{{ selectedMovie.notes }}</span>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeMovieDetails()">Close</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Edit Modal -->
-  <div id="modal" class="modal" [style.display]="modalVisible ? 'flex' : 'none'">
-    <div class="modal-content">
+  <div id="modal" class="modal" [style.display]="modalVisible ? 'flex' : 'none'" (click)="closeModal()" (keydown)="onModalKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Edit movie" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Edit Movie</h3>
         <button class="close-modal" (click)="closeModal()">×</button>
@@ -211,8 +197,8 @@
   </div>
 
   <!-- Delete Confirmation Modal -->
-  <div class="modal confirm-modal" *ngIf="deleteTarget">
-    <div class="modal-content">
+  <div class="modal confirm-modal" *ngIf="deleteTarget" (click)="cancelDelete()" (keydown)="onModalKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Delete movie confirmation" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Delete Movie</h3>
         <button class="close-modal" (click)="cancelDelete()">×</button>

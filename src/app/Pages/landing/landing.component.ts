@@ -14,7 +14,6 @@ import { Subscription } from 'rxjs';
 })
 export class LandingComponent implements OnInit, OnDestroy {
   isNavbarCollapsed = false;
-  isDropdownOpen = false;
   isLoggedIn = false;
   currentTheme: 'light' | 'dark' = 'light';
   private readonly mobileBreakpoint = 768;
@@ -63,17 +62,8 @@ export class LandingComponent implements OnInit, OnDestroy {
     this.syncMobileScrollLock();
   }
 
-  toggleDropdown(): void {
-    this.isDropdownOpen = !this.isDropdownOpen;
-  }
-
-  closeDropdown(): void {
-    this.isDropdownOpen = false;
-  }
-
   closeNavbarMenu(): void {
     this.isNavbarCollapsed = false;
-    this.closeDropdown();
     this.syncMobileScrollLock();
   }
 
@@ -108,14 +98,6 @@ export class LandingComponent implements OnInit, OnDestroy {
   onWindowResize(): void {
     if (window.innerWidth >= this.mobileBreakpoint && this.isNavbarCollapsed) {
       this.closeNavbarMenu();
-    }
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.dropdown')) {
-      this.closeDropdown();
     }
   }
 

@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { UserProfile } from '../../models/user-profile';
 import { UserSubscription } from '../../models/user-subscription';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-profile',
@@ -27,8 +28,11 @@ export class ProfileComponent implements OnInit {
   isSavingSubscription = false;
   isDeletingAccount = false;
   showDeleteConfirm = false;
+  deleteConfirmText = '';
+  readonly deleteConfirmationPhrase = 'Permanently delete my account';
   errorMessage = '';
   successMessage = '';
+  private lastDialogTriggerElement: HTMLElement | null = null;
 
   ngOnInit(): void {
     const rawUserId = localStorage.getItem('userId');
@@ -40,7 +44,11 @@ export class ProfileComponent implements OnInit {
     this.loadData();
   }
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private toastService: ToastService
+  ) {}
 
   loadData(): void {
     if (!this.userId) return;
@@ -110,6 +118,7 @@ export class ProfileComponent implements OnInit {
         this.isEditingProfile = false;
         this.isSavingProfile = false;
         this.successMessage = 'Profile updated successfully.';
+        this.toastService.success('Profile updated.');
       },
       error: (err) => {
         this.errorMessage = err.message || 'Failed to update profile.';
@@ -157,6 +166,7 @@ export class ProfileComponent implements OnInit {
         this.isEditingSubscription = false;
         this.isSavingSubscription = false;
         this.successMessage = 'Subscription saved successfully.';
+        this.toastService.success('Plan details saved.');
       },
       error: (err) => {
         this.errorMessage = err.message || 'Failed to save subscription.';
@@ -178,6 +188,7 @@ export class ProfileComponent implements OnInit {
         this.isEditingSubscription = false;
         this.isSavingSubscription = false;
         this.successMessage = 'Subscription removed successfully.';
+        this.toastService.success('Plan details removed.');
       },
       error: (err) => {
         this.errorMessage = err.message || 'Failed to remove subscription.';
@@ -187,23 +198,35 @@ export class ProfileComponent implements OnInit {
   }
 
   confirmDeleteAccount(): void {
+    this.lastDialogTriggerElement = document.activeElement as HTMLElement;
     this.showDeleteConfirm = true;
+    this.deleteConfirmText = '';
     this.errorMessage = '';
     this.successMessage = '';
+    setTimeout(() => {
+      const field = document.querySelector('#deleteConfirmInput') as HTMLElement | null;
+      field?.focus();
+    });
   }
 
   cancelDeleteAccount(): void {
     this.showDeleteConfirm = false;
+    this.restoreDialogTriggerFocus();
   }
 
   deleteAccount(): void {
     if (!this.userId) return;
+    if (this.deleteConfirmText.trim() !== this.deleteConfirmationPhrase) {
+      this.errorMessage = 'Type the exact confirmation phrase before deleting your account.';
+      return;
+    }
     this.isDeletingAccount = true;
     this.errorMessage = '';
     this.successMessage = '';
 
     this.authService.deleteAccount(this.userId).subscribe({
       next: () => {
+        this.toastService.info('Account deleted.');
         this.authService.logout();
         this.router.navigate(['/']);
       },
@@ -212,6 +235,37 @@ export class ProfileComponent implements OnInit {
         this.isDeletingAccount = false;
       }
     });
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    if (this.showDeleteConfirm && !this.isDeletingAccount) {
+      this.cancelDeleteAccount();
+    }
+  }
+
+  onModalKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+    const target = event.target as HTMLElement | null;
+    const container = target?.closest('.modal-content');
+    if (!container) return;
+
+    const focusableElements = Array.from(
+      container.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    ).filter(el => !el.hasAttribute('disabled'));
+    if (focusableElements.length === 0) return;
+
+    const first = focusableElements[0];
+    const last = focusableElements[focusableElements.length - 1];
+    const active = document.activeElement as HTMLElement;
+
+    if (!event.shiftKey && active === last) {
+      first.focus();
+      event.preventDefault();
+    } else if (event.shiftKey && active === first) {
+      last.focus();
+      event.preventDefault();
+    }
   }
 
   private getEmptySubscription(): Partial<UserSubscription> {
@@ -224,5 +278,11 @@ export class ProfileComponent implements OnInit {
       billingCycle: '',
       notes: ''
     };
+  }
+
+  private restoreDialogTriggerFocus(): void {
+    if (!this.lastDialogTriggerElement) return;
+    this.lastDialogTriggerElement.focus();
+    this.lastDialogTriggerElement = null;
   }
 }

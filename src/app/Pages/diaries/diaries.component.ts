@@ -6,6 +6,7 @@ import { Diary } from '../../models/diary';
 import { ThemeService } from '../../services/theme.service';
 import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-diaries',
@@ -19,9 +20,10 @@ export class DiariesComponent implements OnInit, OnDestroy {
   isLoading = false;
   error: string | null = null;
   isCompactMode = false;
-  expandedDiaries = new Set<number>();
   selectedDiary: Diary | null = null;
   private lastFocusedElement: HTMLElement | null = null;
+  private lastDialogTriggerElement: HTMLElement | null = null;
+  actionMenuForDiaryId: number | null = null;
   currentLayout: 'columns' | 'rows' = 'columns';
   private layoutSubscription?: Subscription;
 
@@ -39,7 +41,8 @@ export class DiariesComponent implements OnInit, OnDestroy {
 
   constructor(
     private diaryService: DiaryService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -103,7 +106,7 @@ export class DiariesComponent implements OnInit, OnDestroy {
     this.editLocation = d.location || '';
     this.editTags = d.tags ? (Array.isArray(d.tags) ? d.tags.join(', ') : d.tags) : '';
     this.editPrivateNotes = d.privateNotes || '';
-    this.modalVisible = true;
+    this.openModal();
   }
 
   saveEditedDiary(): void {
@@ -132,6 +135,7 @@ export class DiariesComponent implements OnInit, OnDestroy {
           }
         }
         this.diaries = this.diaries.map(m => m.id === this.editingId ? updatedDiary : m);
+        this.toastService.success('Diary updated.');
         this.closeModal();
       }
     });
@@ -139,25 +143,42 @@ export class DiariesComponent implements OnInit, OnDestroy {
 
   deleteDiary(id: number): void {
     this.diaries = this.diaries.filter(m => m.id !== id);
-    this.diaryService.deleteDiary(id).subscribe({ error: () => this.loadDiaries() });
+    this.diaryService.deleteDiary(id).subscribe({
+      next: () => this.toastService.success('Diary deleted.'),
+      error: () => {
+        this.toastService.error('Failed to delete diary.');
+        this.loadDiaries();
+      }
+    });
   }
 
   requestDelete(diary: Diary, event?: Event): void {
     if (event) {
       event.stopPropagation();
     }
+    this.closeActionMenu();
+    this.lastDialogTriggerElement = document.activeElement as HTMLElement;
     this.deleteTarget = diary;
+    setTimeout(() => this.focusFirstDialogControl('.confirm-modal .modal-content'));
   }
 
   confirmDelete(): void {
     if (!this.deleteTarget) return;
     const diaryId = this.deleteTarget.id;
     this.deleteTarget = null;
+    this.restoreDialogTriggerFocus();
     this.deleteDiary(diaryId);
   }
 
   cancelDelete(): void {
     this.deleteTarget = null;
+    this.restoreDialogTriggerFocus();
+  }
+
+  openModal(): void {
+    this.lastDialogTriggerElement = document.activeElement as HTMLElement;
+    this.modalVisible = true;
+    setTimeout(() => this.focusFirstDialogControl('#modal .modal-content'));
   }
 
   closeModal(): void { 
@@ -171,21 +192,16 @@ export class DiariesComponent implements OnInit, OnDestroy {
     this.editLocation = '';
     this.editTags = '';
     this.editPrivateNotes = '';
+    this.restoreDialogTriggerFocus();
   }
 
-  toggleDiaryExpansion(diaryId: number, event?: Event): void {
-    if (event) {
-      event.stopPropagation();
-    }
-    if (this.expandedDiaries.has(diaryId)) {
-      this.expandedDiaries.delete(diaryId);
-    } else {
-      this.expandedDiaries.add(diaryId);
-    }
+  toggleActionMenu(diaryId: number, event: Event): void {
+    event.stopPropagation();
+    this.actionMenuForDiaryId = this.actionMenuForDiaryId === diaryId ? null : diaryId;
   }
 
-  isDiaryExpanded(diaryId: number): boolean {
-    return this.expandedDiaries.has(diaryId);
+  closeActionMenu(): void {
+    this.actionMenuForDiaryId = null;
   }
 
   truncateText(text: string, maxLength: number = 200): string {
@@ -199,25 +215,67 @@ export class DiariesComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    this.lastFocusedElement = document.activeElement as HTMLElement;
+    this.closeActionMenu();
+    if (this.selectedDiary?.id === diary.id) {
+      this.closeDiaryDetails();
+      return;
+    }
+    this.lastFocusedElement = (event?.currentTarget as HTMLElement) || document.activeElement as HTMLElement;
     this.selectedDiary = diary;
     document.body.style.overflow = 'hidden';
-    setTimeout(() => {
-      const firstFocusable = document.querySelector('.diary-detail-modal .close-modal') as HTMLElement | null;
-      firstFocusable?.focus();
-    });
   }
 
   closeDiaryDetails(): void {
     this.selectedDiary = null;
+    this.closeActionMenu();
     document.body.style.overflow = '';
     this.lastFocusedElement?.focus();
   }
 
-  onDiaryDetailKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Tab') return;
-    const container = document.querySelector('.diary-detail-modal .modal-content');
+  onModalKeydown(event: KeyboardEvent): void {
+    this.trapFocusWithinModal(event);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    if (this.selectedDiary) {
+      this.closeDiaryDetails();
+      return;
+    }
+    if (this.modalVisible) {
+      this.closeModal();
+      return;
+    }
+    if (this.deleteTarget) {
+      this.cancelDelete();
+      return;
+    }
+    if (this.actionMenuForDiaryId !== null) {
+      this.closeActionMenu();
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.card-actions-menu')) {
+      this.closeActionMenu();
+    }
+  }
+
+  private focusFirstDialogControl(containerSelector: string): void {
+    const container = document.querySelector(containerSelector);
     if (!container) return;
+    const focusable = container.querySelector<HTMLElement>('button, input, select, textarea, [href], [tabindex]:not([tabindex="-1"])');
+    focusable?.focus();
+  }
+
+  private trapFocusWithinModal(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+    const target = event.target as HTMLElement | null;
+    const container = target?.closest('.modal-content');
+    if (!container) return;
+
     const focusableElements = Array.from(
       container.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
     ).filter(el => !el.hasAttribute('disabled'));
@@ -236,11 +294,10 @@ export class DiariesComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('document:keydown.escape')
-  onEscapePressed(): void {
-    if (this.selectedDiary) {
-      this.closeDiaryDetails();
-    }
+  private restoreDialogTriggerFocus(): void {
+    if (!this.lastDialogTriggerElement) return;
+    this.lastDialogTriggerElement.focus();
+    this.lastDialogTriggerElement = null;
   }
 }
 

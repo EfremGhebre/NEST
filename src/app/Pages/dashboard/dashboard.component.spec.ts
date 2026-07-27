@@ -33,10 +33,14 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should render activity icon class without overriding container class', () => {
+  it('should render recent activity entries when present', () => {
+    component.recentItems = [
+      { type: 'activity', title: 'Walk', author: 'Fitness', date: 'Today', timestamp: Date.now() }
+    ] as any;
+    fixture.detectChanges();
     const container = fixture.nativeElement.querySelector('.recent-activity');
-    const icon = fixture.nativeElement.querySelector('.recent-icon-activity');
+    const item = fixture.nativeElement.querySelector('.recent-item');
     expect(container).toBeTruthy();
-    expect(icon).toBeTruthy();
+    expect(item).toBeTruthy();
   });
 });

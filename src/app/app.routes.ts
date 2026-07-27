@@ -26,6 +26,9 @@ export const routes: Routes = [
       children: [
         { path: '', component: DashboardComponent },
         { path: 'dashboard', component: DashboardComponent },
+        { path: 'all-notes', component: DashboardComponent },
+        { path: 'collections', component: DashboardComponent },
+        { path: 'recent', component: DashboardComponent },
         { path: 'books', component: BooksComponent },
         { path: 'books-new', component: AddBookComponent },
         { path: 'quotes', component: QuotesComponent },

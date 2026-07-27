@@ -33,72 +33,98 @@
     <p>Start building your personal library!</p>
   </div>
 
-  <!-- Books Grid -->
-  <div *ngIf="!isLoading && !error && books.length > 0" class="books-grid content-grid" [class.rows-layout]="currentLayout === 'rows'">
-    <div *ngFor="let book of books" 
-         class="book-card" 
-         [class.expanded]="selectedBook?.id === book.id"
-         (click)="openBookDetails(book, $event)">
-      <div class="book-card-body">
-        <div class="book-cover">
-          <i class="bi bi-book"></i>
-          <span class="book-cover-letter">{{ book.title.charAt(0) }}</span>
+  <!-- Notebook List -->
+  <div *ngIf="!isLoading && !error && books.length > 0" class="books-grid">
+    <article
+      *ngFor="let book of books"
+      class="book-card"
+      (click)="openBookDetails(book, $event)"
+      tabindex="0"
+      (keydown.enter)="openBookDetails(book, $event)"
+    >
+      <div class="book-header">
+        <div class="book-heading">
+          <span class="book-icon"><i class="bi bi-book"></i></span>
+          <div>
+            <h3 class="book-title">{{ book.title }}</h3>
+            <div class="book-meta">
+              <span class="book-type">Book</span>
+              <span *ngIf="book.genre" class="book-genre">{{ book.genre }}</span>
+            </div>
+          </div>
         </div>
-
-        <div class="book-info">
-          <div class="book-header">
-            <div class="book-title-section">
-              <h3 class="book-title">{{ book.title }}</h3>
-              <div class="book-meta">
-                <span class="book-type">Book</span>
-                <span *ngIf="book.genre" class="book-genre">{{ book.genre }}</span>
-                <span *ngIf="book.status" class="book-status">{{ book.status }}</span>
-              </div>
-            </div>
-            <div class="book-actions" (click)="$event.stopPropagation()">
-              <button class="action-button expand" 
-                      title="View Details"
-                      (click)="openBookDetails(book, $event)">
-                <i class="bi bi-arrows-fullscreen"></i>
-              </button>
-              <button class="action-button edit" (click)="editBook(book.id)" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="action-button delete" (click)="requestDelete(book, $event)" title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-
-          <div class="book-summary">
-            <div class="book-author">
-              <i class="bi bi-person"></i>
-              <span>{{ book.author }}</span>
-            </div>
-            <div class="book-metrics">
-              <span *ngIf="book.publicationYear" class="book-metric">
-                <i class="bi bi-calendar3"></i>
-                {{ book.publicationYear }}
-              </span>
-              <span *ngIf="book.pages" class="book-metric">
-                <i class="bi bi-book"></i>
-                {{ book.pages }} pages
-              </span>
-              <span *ngIf="book.rating" class="book-metric">
-                <i class="bi bi-star-fill"></i>
-                {{ book.rating }}/5
-              </span>
-            </div>
-          </div>
-          
-          <div class="book-description">
-            <p>
-              {{ truncateText(book.description, 180) }}
-            </p>
+        <div class="book-actions card-actions-menu" (click)="$event.stopPropagation()">
+          <button class="action-button more" (click)="toggleActionMenu(book.id, $event)" title="More actions" aria-label="More actions">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="action-menu" *ngIf="actionMenuForBookId === book.id">
+            <button type="button" (click)="editBook(book.id)">
+              <i class="bi bi-pencil"></i>
+              Edit
+            </button>
+            <button type="button" (click)="requestDelete(book, $event)">
+              <i class="bi bi-trash"></i>
+              Delete
+            </button>
           </div>
         </div>
       </div>
-    </div>
+
+      <p class="book-preview">{{ truncateText(book.description, 220) }}</p>
+    </article>
+  </div>
+
+  <div class="book-overlay" *ngIf="selectedBook" (click)="closeBookDetails()">
+    <article class="book-panel" role="dialog" aria-modal="true" aria-label="Book details" (click)="$event.stopPropagation()">
+      <div class="book-header">
+        <div class="book-heading">
+          <span class="book-icon"><i class="bi bi-book"></i></span>
+          <div>
+            <h3 class="book-title">{{ selectedBook.title }}</h3>
+            <div class="book-meta">
+              <span class="book-type">Book</span>
+              <span *ngIf="selectedBook.genre" class="book-genre">{{ selectedBook.genre }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="book-actions card-actions-menu" (click)="$event.stopPropagation()">
+          <button class="action-button more" (click)="toggleActionMenu(selectedBook.id, $event)" title="More actions" aria-label="More actions">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="action-menu" *ngIf="actionMenuForBookId === selectedBook.id">
+            <button type="button" (click)="editBook(selectedBook.id)">
+              <i class="bi bi-pencil"></i>
+              Edit
+            </button>
+            <button type="button" (click)="requestDelete(selectedBook, $event)">
+              <i class="bi bi-trash"></i>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p class="book-preview">{{ selectedBook.description }}</p>
+
+      <section class="book-expanded">
+        <div class="detail-grid">
+          <p><strong>Author:</strong> {{ selectedBook.author }}</p>
+          <p *ngIf="selectedBook.status"><strong>Status:</strong> {{ selectedBook.status }}</p>
+          <p *ngIf="selectedBook.publicationYear"><strong>Publication Year:</strong> {{ selectedBook.publicationYear }}</p>
+          <p *ngIf="selectedBook.pages"><strong>Pages:</strong> {{ selectedBook.pages }}</p>
+          <p *ngIf="selectedBook.rating"><strong>Rating:</strong> {{ selectedBook.rating }}/5</p>
+          <p *ngIf="selectedBook.createdAt"><strong>Created:</strong> {{ selectedBook.createdAt | date:'medium' }}</p>
+          <p *ngIf="selectedBook.notes"><strong>Notes:</strong> {{ selectedBook.notes }}</p>
+          <p *ngIf="selectedBook.tags && selectedBook.tags.length > 0"><strong>Tags:</strong> {{ selectedBook.tags.join(', ') }}</p>
+          <p><strong>Description:</strong> {{ selectedBook.description }}</p>
+        </div>
+        <div class="expanded-actions">
+          <button class="btn btn-secondary" (click)="closeBookDetails()">Collapse</button>
+          <button class="btn btn-primary" (click)="editBook(selectedBook.id)">Edit</button>
+          <button class="btn btn-danger" (click)="requestDelete(selectedBook, $event)">Delete</button>
+        </div>
+      </section>
+    </article>
   </div>
 
   <!-- Results Count -->
@@ -106,75 +132,9 @@
     <p>Showing {{ books.length }} book{{ books.length === 1 ? '' : 's' }}</p>
   </div>
 
-  <div class="modal confirm-modal book-detail-modal" *ngIf="selectedBook" (click)="closeBookDetails()" (keydown)="onBookDetailKeydown($event)">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Book details" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ selectedBook.title }}</h3>
-        <button class="close-modal" (click)="closeBookDetails()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="detail-row">
-          <i class="bi bi-person"></i>
-          <span class="detail-label">Author:</span>
-          <span class="detail-value">{{ selectedBook.author }}</span>
-        </div>
-        <div class="detail-row">
-          <i class="bi bi-info-circle"></i>
-          <span class="detail-label">Description:</span>
-          <span class="detail-value">{{ selectedBook.description }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedBook.genre">
-          <i class="bi bi-bookmark"></i>
-          <span class="detail-label">Category:</span>
-          <span class="detail-value">{{ selectedBook.genre }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedBook.publicationYear">
-          <i class="bi bi-calendar3"></i>
-          <span class="detail-label">Publication:</span>
-          <span class="detail-value">{{ selectedBook.publicationYear }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedBook.pages">
-          <i class="bi bi-file-text"></i>
-          <span class="detail-label">Pages:</span>
-          <span class="detail-value">{{ selectedBook.pages }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedBook.status">
-          <i class="bi bi-check-circle"></i>
-          <span class="detail-label">Status:</span>
-          <span class="detail-value">{{ selectedBook.status }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedBook.rating">
-          <i class="bi bi-star"></i>
-          <span class="detail-label">Rating:</span>
-          <span class="detail-value">{{ selectedBook.rating }}/5</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedBook.notes">
-          <i class="bi bi-sticky"></i>
-          <span class="detail-label">Notes:</span>
-          <span class="detail-value">{{ selectedBook.notes }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedBook.createdAt">
-          <i class="bi bi-clock-history"></i>
-          <span class="detail-label">Created:</span>
-          <span class="detail-value">{{ selectedBook.createdAt | date:'medium' }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedBook.tags && selectedBook.tags.length > 0">
-          <i class="bi bi-tags"></i>
-          <span class="detail-label">Tags:</span>
-          <div class="tags-container">
-            <span *ngFor="let tag of selectedBook.tags" class="tag">{{ tag }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeBookDetails()">Close</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Edit Modal -->
-  <div id="modal" class="modal" [style.display]="modalVisible ? 'flex' : 'none'">
-    <div class="modal-content">
+  <div id="modal" class="modal" [style.display]="modalVisible ? 'flex' : 'none'" (click)="closeModal()" (keydown)="onModalKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Edit book" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Edit Book</h3>
         <button class="close-modal" (click)="closeModal()">×</button>
@@ -261,8 +221,8 @@
   </div>
 
   <!-- Delete Confirmation Modal -->
-  <div class="modal confirm-modal" *ngIf="deleteTarget">
-    <div class="modal-content">
+  <div class="modal confirm-modal" *ngIf="deleteTarget" (click)="cancelDelete()" (keydown)="onModalKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Delete book confirmation" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Delete Book</h3>
         <button class="close-modal" (click)="cancelDelete()">×</button>

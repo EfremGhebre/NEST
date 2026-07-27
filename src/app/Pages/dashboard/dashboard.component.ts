@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -22,6 +22,9 @@ import { Activity } from '../../models/activity';
 })
 export class DashboardComponent implements OnInit {
   user: any = null;
+  loading = true;
+  selectedAction: QuickActionCard | null = null;
+  private lastFocusedElement: HTMLElement | null = null;
   stats = {
     totalBooks: 0,
     totalQuotes: 0,
@@ -31,7 +34,7 @@ export class DashboardComponent implements OnInit {
     recentActivity: 0
   };
 
-  quickActions = [
+  quickActions: QuickActionCard[] = [
     {
       title: 'Add New Book',
       description: 'Add a new book to your collection',
@@ -227,9 +230,11 @@ export class DashboardComponent implements OnInit {
     const userId = userIdStr ? Number(userIdStr) : null;
     if (!userId) {
       this.stats = { totalBooks: 0, totalQuotes: 0, totalMovies: 0, totalDiaries: 0, totalActivities: 0, recentActivity: 0 };
+      this.loading = false;
       return;
     }
 
+    this.loading = true;
     forkJoin({
       books: this.bookService.getBooksByUser(userId),
       quotes: this.quoteService.getQuotesByUser(userId),
@@ -243,13 +248,14 @@ export class DashboardComponent implements OnInit {
         this.stats.totalMovies = movies.length;
         this.stats.totalDiaries = diaries.length;
         this.stats.totalActivities = activities.length;
-        // simple recent activity metric across all items
         this.stats.recentActivity = Math.min(books.length + quotes.length + movies.length + diaries.length + activities.length, 10);
         this.recentItems = this.buildRecentItems(books, quotes, movies, diaries, activities);
+        this.loading = false;
       },
       error: () => {
         this.stats = { totalBooks: 0, totalQuotes: 0, totalMovies: 0, totalDiaries: 0, totalActivities: 0, recentActivity: 0 };
         this.recentItems = [];
+        this.loading = false;
       }
     });
   }
@@ -262,8 +268,53 @@ export class DashboardComponent implements OnInit {
 
   getGreeting(): string {
     const hour = new Date().getHours();
-    const base = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
+    const base = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
     return `${base}, ${this.user?.name || 'Friend'}`;
+  }
+
+  get quickCollectionActions(): Array<{ label: string; route: string; icon: string }> {
+    return [
+      { label: 'Book note', route: 'books-new', icon: 'bi-book' },
+      { label: 'Quote note', route: 'quotes-new', icon: 'bi-chat-quote' },
+      { label: 'Movie note', route: 'movies-new', icon: 'bi-film' },
+      { label: 'Diary entry', route: 'diaries-new', icon: 'bi-journal-richtext' },
+      { label: 'Activity note', route: 'activities-new', icon: 'bi-activity' }
+    ];
+  }
+
+  openActionCard(action: QuickActionCard, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.lastFocusedElement = document.activeElement as HTMLElement;
+    this.selectedAction = action;
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => {
+      const firstFocusable = document.querySelector('.action-overlay .close-panel') as HTMLElement | null;
+      firstFocusable?.focus();
+    });
+  }
+
+  closeActionCard(): void {
+    this.selectedAction = null;
+    document.body.style.overflow = '';
+    this.lastFocusedElement?.focus();
+  }
+
+  startActionFromModal(): void {
+    if (!this.selectedAction) return;
+    const action = this.selectedAction;
+    this.closeActionCard();
+    this.navigateTo(action);
+  }
+
+  trackByTitle(index: number, item: RecentItem): string {
+    return `${item.type}-${item.title}-${index}`;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    if (this.selectedAction) {
+      this.closeActionCard();
+    }
   }
 
   private capitalizeName(name: string): string {
@@ -379,4 +430,12 @@ interface RecentItem {
   author: string;
   date: string;
   timestamp: number;
+}
+
+interface QuickActionCard {
+  title: string;
+  description: string;
+  icon: string;
+  route: string;
+  color: string;
 }

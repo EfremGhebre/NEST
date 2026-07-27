@@ -146,3 +146,110 @@ test('profile and subscription lifecycle works', async () => {
   });
   assert.equal(loginAfterDelete.response.status, 401);
 });
+
+test('global collection endpoints only return authenticated user records', async () => {
+  const registerA = await requestJson(`${baseUrl}/users/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: 'ownerA',
+      email: 'owner-a@example.com',
+      password: 'password123'
+    })
+  });
+  assert.equal(registerA.response.status, 200);
+
+  const registerB = await requestJson(`${baseUrl}/users/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: 'ownerB',
+      email: 'owner-b@example.com',
+      password: 'password123'
+    })
+  });
+  assert.equal(registerB.response.status, 200);
+
+  const userAId = registerA.body.userId;
+  const userBId = registerB.body.userId;
+  const headersA = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${registerA.body.token}`
+  };
+  const headersB = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${registerB.body.token}`
+  };
+
+  await requestJson(`${baseUrl}/users/${userAId}/books`, {
+    method: 'POST',
+    headers: headersA,
+    body: JSON.stringify({ title: 'A Book', author: 'A Author', description: 'A Description' })
+  });
+  await requestJson(`${baseUrl}/users/${userBId}/books`, {
+    method: 'POST',
+    headers: headersB,
+    body: JSON.stringify({ title: 'B Book', author: 'B Author', description: 'B Description' })
+  });
+
+  await requestJson(`${baseUrl}/users/${userAId}/quotes`, {
+    method: 'POST',
+    headers: headersA,
+    body: JSON.stringify({ title: 'A Quote', author: 'A Author', description: 'A Quote Description' })
+  });
+  await requestJson(`${baseUrl}/users/${userBId}/quotes`, {
+    method: 'POST',
+    headers: headersB,
+    body: JSON.stringify({ title: 'B Quote', author: 'B Author', description: 'B Quote Description' })
+  });
+
+  await requestJson(`${baseUrl}/users/${userAId}/movies`, {
+    method: 'POST',
+    headers: headersA,
+    body: JSON.stringify({ title: 'A Movie', director: 'A Director', description: 'A Movie Description' })
+  });
+  await requestJson(`${baseUrl}/users/${userBId}/movies`, {
+    method: 'POST',
+    headers: headersB,
+    body: JSON.stringify({ title: 'B Movie', director: 'B Director', description: 'B Movie Description' })
+  });
+
+  await requestJson(`${baseUrl}/users/${userAId}/diaries`, {
+    method: 'POST',
+    headers: headersA,
+    body: JSON.stringify({ title: 'A Diary', body: 'A Diary body' })
+  });
+  await requestJson(`${baseUrl}/users/${userBId}/diaries`, {
+    method: 'POST',
+    headers: headersB,
+    body: JSON.stringify({ title: 'B Diary', body: 'B Diary body' })
+  });
+
+  const booksA = await requestJson(`${baseUrl}/books`, {
+    headers: { Authorization: `Bearer ${registerA.body.token}` }
+  });
+  assert.equal(booksA.response.status, 200);
+  assert.equal(booksA.body.length, 1);
+  assert.ok(booksA.body.every(book => Number(book.userId) === Number(userAId)));
+
+  const quotesA = await requestJson(`${baseUrl}/quotes`, {
+    headers: { Authorization: `Bearer ${registerA.body.token}` }
+  });
+  assert.equal(quotesA.response.status, 200);
+  assert.equal(quotesA.body.length, 1);
+  assert.ok(quotesA.body.every(quote => Number(quote.userId) === Number(userAId)));
+
+  const moviesA = await requestJson(`${baseUrl}/movies`, {
+    headers: { Authorization: `Bearer ${registerA.body.token}` }
+  });
+  assert.equal(moviesA.response.status, 200);
+  assert.equal(moviesA.body.length, 1);
+  assert.ok(moviesA.body.every(movie => Number(movie.userId) === Number(userAId)));
+
+  const diariesA = await requestJson(`${baseUrl}/diaries`, {
+    headers: { Authorization: `Bearer ${registerA.body.token}` }
+  });
+  assert.equal(diariesA.response.status, 200);
+  assert.equal(diariesA.body.length, 1);
+  assert.ok(diariesA.body.every(diary => Number(diary.userId) === Number(userAId)));
+});

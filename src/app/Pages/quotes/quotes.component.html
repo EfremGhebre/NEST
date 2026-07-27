@@ -34,68 +34,95 @@
     <p>Start collecting your favorite quotes!</p>
   </div>
 
-  <!-- Quotes Grid -->
-  <div *ngIf="!isLoading && !error && quotes.length > 0" class="quotes-grid content-grid" [class.rows-layout]="currentLayout === 'rows'">
-    <div *ngFor="let quote of quotes" 
-         class="quote-card" 
-         [class.expanded]="selectedQuote?.id === quote.id"
-         (click)="openQuoteDetails(quote, $event)">
-      <div class="quote-card-body">
-        <div class="quote-cover">
-          <i class="bi bi-quote"></i>
-          <span class="quote-cover-letter">{{ quote.title.charAt(0) }}</span>
+  <!-- Notebook List -->
+  <div *ngIf="!isLoading && !error && quotes.length > 0" class="quotes-grid">
+    <article
+      *ngFor="let quote of quotes"
+      class="quote-card"
+      (click)="openQuoteDetails(quote, $event)"
+      tabindex="0"
+      (keydown.enter)="openQuoteDetails(quote, $event)"
+    >
+      <div class="quote-header">
+        <div class="quote-heading">
+          <span class="quote-icon"><i class="bi bi-quote"></i></span>
+          <div>
+            <h3 class="quote-title">{{ quote.title }}</h3>
+            <div class="quote-meta">
+              <span class="quote-type">Quote</span>
+              <span *ngIf="quote.category" class="quote-category">{{ quote.category }}</span>
+            </div>
+          </div>
         </div>
-
-        <div class="quote-info">
-          <div class="quote-header">
-            <div class="quote-title-section">
-              <h3 class="quote-title">{{ quote.title }}</h3>
-              <div class="quote-meta">
-                <span class="quote-type">Quote</span>
-                <span *ngIf="quote.category" class="quote-category">{{ quote.category }}</span>
-              </div>
-            </div>
-            <div class="quote-actions" (click)="$event.stopPropagation()">
-              <button class="action-button expand" 
-                      title="View Details"
-                      (click)="openQuoteDetails(quote, $event)">
-                <i class="bi bi-arrows-fullscreen"></i>
-              </button>
-              <button class="action-button edit" (click)="editQuote(quote.id)" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="action-button delete" (click)="requestDelete(quote, $event)" title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-
-          <div class="quote-summary">
-            <div class="quote-author">
-              <i class="bi bi-person"></i>
-              <span>{{ quote.author }}</span>
-            </div>
-            <div class="quote-metrics">
-              <span *ngIf="quote.source" class="quote-metric">
-                <i class="bi bi-book"></i>
-                {{ quote.source }}
-              </span>
-              <span *ngIf="quote.date" class="quote-metric">
-                <i class="bi bi-calendar3"></i>
-                {{ quote.date }}
-              </span>
-            </div>
-          </div>
-          
-          <div class="quote-text">
-            <blockquote>
-              <i class="bi bi-quote"></i>
-              <p>{{ truncateText(quote.description, 180) }}</p>
-            </blockquote>
+        <div class="quote-actions card-actions-menu" (click)="$event.stopPropagation()">
+          <button class="action-button more" (click)="toggleActionMenu(quote.id, $event)" title="More actions" aria-label="More actions">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="action-menu" *ngIf="actionMenuForQuoteId === quote.id">
+            <button type="button" (click)="editQuote(quote.id)">
+              <i class="bi bi-pencil"></i>
+              Edit
+            </button>
+            <button type="button" (click)="requestDelete(quote, $event)">
+              <i class="bi bi-trash"></i>
+              Delete
+            </button>
           </div>
         </div>
       </div>
-    </div>
+
+      <p class="quote-preview">{{ truncateText(quote.description, 220) }}</p>
+    </article>
+  </div>
+
+  <div class="quote-overlay" *ngIf="selectedQuote" (click)="closeQuoteDetails()">
+    <article class="quote-panel" role="dialog" aria-modal="true" aria-label="Quote details" (click)="$event.stopPropagation()">
+      <div class="quote-header">
+        <div class="quote-heading">
+          <span class="quote-icon"><i class="bi bi-quote"></i></span>
+          <div>
+            <h3 class="quote-title">{{ selectedQuote.title }}</h3>
+            <div class="quote-meta">
+              <span class="quote-type">Quote</span>
+              <span *ngIf="selectedQuote.category" class="quote-category">{{ selectedQuote.category }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="quote-actions card-actions-menu" (click)="$event.stopPropagation()">
+          <button class="action-button more" (click)="toggleActionMenu(selectedQuote.id, $event)" title="More actions" aria-label="More actions">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="action-menu" *ngIf="actionMenuForQuoteId === selectedQuote.id">
+            <button type="button" (click)="editQuote(selectedQuote.id)">
+              <i class="bi bi-pencil"></i>
+              Edit
+            </button>
+            <button type="button" (click)="requestDelete(selectedQuote, $event)">
+              <i class="bi bi-trash"></i>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p class="quote-preview">{{ selectedQuote.description }}</p>
+
+      <section class="quote-expanded">
+        <div class="detail-grid">
+          <p><strong>Author:</strong> {{ selectedQuote.author }}</p>
+          <p *ngIf="selectedQuote.source"><strong>Source:</strong> {{ selectedQuote.source }}</p>
+          <p *ngIf="selectedQuote.date"><strong>Date:</strong> {{ selectedQuote.date | date:'mediumDate' }}</p>
+          <p *ngIf="selectedQuote.notes"><strong>Notes:</strong> {{ selectedQuote.notes }}</p>
+          <p *ngIf="selectedQuote.tags && selectedQuote.tags.length > 0"><strong>Tags:</strong> {{ selectedQuote.tags.join(', ') }}</p>
+          <p><strong>Quote:</strong> {{ selectedQuote.description }}</p>
+        </div>
+        <div class="expanded-actions">
+          <button class="btn btn-secondary" (click)="closeQuoteDetails()">Collapse</button>
+          <button class="btn btn-primary" (click)="editQuote(selectedQuote.id)">Edit</button>
+          <button class="btn btn-danger" (click)="requestDelete(selectedQuote, $event)">Delete</button>
+        </div>
+      </section>
+    </article>
   </div>
 
   <!-- Results Count -->
@@ -103,61 +130,11 @@
     <p>Showing {{ quotes.length }} quote{{ quotes.length === 1 ? '' : 's' }}</p>
   </div>
 
-  <div class="modal confirm-modal quote-detail-modal" *ngIf="selectedQuote" (click)="closeQuoteDetails()" (keydown)="onQuoteDetailKeydown($event)">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Quote details" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ selectedQuote.title }}</h3>
-        <button class="close-modal" (click)="closeQuoteDetails()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="detail-row">
-          <i class="bi bi-quote"></i>
-          <span class="detail-label">Quote:</span>
-          <span class="detail-value">{{ selectedQuote.description }}</span>
-        </div>
-        <div class="detail-row">
-          <i class="bi bi-person"></i>
-          <span class="detail-label">Author:</span>
-          <span class="detail-value">{{ selectedQuote.author }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedQuote.category">
-          <i class="bi bi-bookmark"></i>
-          <span class="detail-label">Category:</span>
-          <span class="detail-value">{{ selectedQuote.category }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedQuote.source">
-          <i class="bi bi-book"></i>
-          <span class="detail-label">Source:</span>
-          <span class="detail-value">{{ selectedQuote.source }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedQuote.date">
-          <i class="bi bi-calendar3"></i>
-          <span class="detail-label">Date:</span>
-          <span class="detail-value">{{ selectedQuote.date | date:'mediumDate' }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedQuote.notes">
-          <i class="bi bi-sticky"></i>
-          <span class="detail-label">Notes:</span>
-          <span class="detail-value">{{ selectedQuote.notes }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedQuote.tags && selectedQuote.tags.length > 0">
-          <i class="bi bi-tags"></i>
-          <span class="detail-label">Tags:</span>
-          <div class="tags-container">
-            <span *ngFor="let tag of selectedQuote.tags" class="tag">{{ tag }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeQuoteDetails()">Close</button>
-      </div>
-    </div>
-  </div>
 </div>
 
   <!-- Edit Modal -->
-  <div id="modal" class="modal" [style.display]="modalVisible ? 'flex' : 'none'">
-    <div class="modal-content">
+  <div id="modal" class="modal" [style.display]="modalVisible ? 'flex' : 'none'" (click)="closeModal()" (keydown)="onModalKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Edit quote" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Edit Quote</h3>
         <button class="close-modal" (click)="closeModal()">×</button>
@@ -218,8 +195,8 @@
   </div>
 
   <!-- Delete Confirmation Modal -->
-  <div class="modal confirm-modal" *ngIf="deleteTarget">
-    <div class="modal-content">
+  <div class="modal confirm-modal" *ngIf="deleteTarget" (click)="cancelDelete()" (keydown)="onModalKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Delete quote confirmation" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Delete Quote</h3>
         <button class="close-modal" (click)="cancelDelete()">×</button>

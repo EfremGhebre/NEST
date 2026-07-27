@@ -6,6 +6,7 @@ import { ActivityService } from '../../services/activityservice.service';
 import { Activity } from '../../models/activity';
 import { ThemeService } from '../../services/theme.service';
 import { Subscription } from 'rxjs';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-activities',
@@ -19,6 +20,7 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   filteredActivities: Activity[] = [];
   loading = true;
   error: string | null = null;
+  successMessage: string | null = null;
   
   // Modal properties
   modalVisible = false;
@@ -40,9 +42,10 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   selectedStatus = 'all';
   selectedPriority = 'all';
   searchTerm = '';
-  expandedActivities = new Set<number>();
   selectedActivity: Activity | null = null;
   private lastFocusedElement: HTMLElement | null = null;
+  private lastDialogTriggerElement: HTMLElement | null = null;
+  actionMenuForActivityId: number | null = null;
   currentLayout: 'columns' | 'rows' = 'columns';
   private layoutSubscription?: Subscription;
   
@@ -74,7 +77,8 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
   constructor(
     private activityService: ActivityService,
     private router: Router,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -148,17 +152,20 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     this.editPriority = activity.priority;
     this.editTags = activity.tags ? (Array.isArray(activity.tags) ? activity.tags.join(', ') : activity.tags) : '';
     this.editNotes = activity.notes || '';
-    this.modalVisible = true;
+    this.openModal();
   }
 
   deleteActivity(activity: Activity): void {
     this.activityService.deleteActivity(activity.id!).subscribe({
       next: () => {
+        this.successMessage = 'Activity deleted.';
+        this.toastService.success('Activity deleted.');
         this.loadActivities();
       },
       error: (error) => {
         console.error('Error deleting activity:', error);
-        alert('Failed to delete activity');
+        this.error = 'Failed to delete activity.';
+        this.toastService.error(this.error);
       }
     });
   }
@@ -167,18 +174,23 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
+    this.closeActionMenu();
+    this.lastDialogTriggerElement = document.activeElement as HTMLElement;
     this.deleteTarget = activity;
+    setTimeout(() => this.focusFirstDialogControl('.confirm-modal .modal-content'));
   }
 
   confirmDelete(): void {
     if (!this.deleteTarget) return;
     const target = this.deleteTarget;
     this.deleteTarget = null;
+    this.restoreDialogTriggerFocus();
     this.deleteActivity(target);
   }
 
   cancelDelete(): void {
     this.deleteTarget = null;
+    this.restoreDialogTriggerFocus();
   }
 
   getStatusClass(status: string): string {
@@ -215,7 +227,8 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
 
   saveEditedActivity(): void {
     if (!this.editTitle.trim() || !this.editDescription.trim() || !this.editCategory || !this.editDate) {
-      alert('Please fill in all required fields');
+      this.error = 'Please fill in all required fields.';
+      this.toastService.error(this.error);
       return;
     }
 
@@ -242,14 +255,23 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
             this.activities[index] = activity;
             this.applyFilters();
           }
+          this.successMessage = 'Changes saved.';
+          this.toastService.success('Activity updated.');
           this.closeModal();
         },
         error: (error) => {
           console.error('Error updating activity:', error);
-          alert('Failed to update activity');
+          this.error = 'Failed to update activity.';
+          this.toastService.error(this.error);
         }
       });
     }
+  }
+
+  openModal(): void {
+    this.lastDialogTriggerElement = document.activeElement as HTMLElement;
+    this.modalVisible = true;
+    setTimeout(() => this.focusFirstDialogControl('#modal .modal-content'));
   }
 
   closeModal(): void {
@@ -265,23 +287,17 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     this.editPriority = '';
     this.editTags = '';
     this.editNotes = '';
+    this.restoreDialogTriggerFocus();
   }
 
-  toggleActivityExpansion(activityId: number | undefined, event?: Event): void {
+  toggleActionMenu(activityId: number | undefined, event: Event): void {
     if (!activityId) return;
-    if (event) {
-      event.stopPropagation();
-    }
-    if (this.expandedActivities.has(activityId)) {
-      this.expandedActivities.delete(activityId);
-    } else {
-      this.expandedActivities.add(activityId);
-    }
+    event.stopPropagation();
+    this.actionMenuForActivityId = this.actionMenuForActivityId === activityId ? null : activityId;
   }
 
-  isActivityExpanded(activityId: number | undefined): boolean {
-    if (!activityId) return false;
-    return this.expandedActivities.has(activityId);
+  closeActionMenu(): void {
+    this.actionMenuForActivityId = null;
   }
 
   truncateText(text: string, maxLength: number = 150): string {
@@ -295,25 +311,67 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    this.lastFocusedElement = document.activeElement as HTMLElement;
+    this.closeActionMenu();
+    if (this.selectedActivity?.id === activity.id) {
+      this.closeActivityDetails();
+      return;
+    }
+    this.lastFocusedElement = (event?.currentTarget as HTMLElement) || document.activeElement as HTMLElement;
     this.selectedActivity = activity;
     document.body.style.overflow = 'hidden';
-    setTimeout(() => {
-      const firstFocusable = document.querySelector('.activity-detail-modal .close-modal') as HTMLElement | null;
-      firstFocusable?.focus();
-    });
   }
 
   closeActivityDetails(): void {
     this.selectedActivity = null;
+    this.closeActionMenu();
     document.body.style.overflow = '';
     this.lastFocusedElement?.focus();
   }
 
-  onActivityDetailKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Tab') return;
-    const container = document.querySelector('.activity-detail-modal .modal-content');
+  onModalKeydown(event: KeyboardEvent): void {
+    this.trapFocusWithinModal(event);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    if (this.selectedActivity) {
+      this.closeActivityDetails();
+      return;
+    }
+    if (this.modalVisible) {
+      this.closeModal();
+      return;
+    }
+    if (this.deleteTarget) {
+      this.cancelDelete();
+      return;
+    }
+    if (this.actionMenuForActivityId !== null) {
+      this.closeActionMenu();
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.card-actions-menu')) {
+      this.closeActionMenu();
+    }
+  }
+
+  private focusFirstDialogControl(containerSelector: string): void {
+    const container = document.querySelector(containerSelector);
     if (!container) return;
+    const focusable = container.querySelector<HTMLElement>('button, input, select, textarea, [href], [tabindex]:not([tabindex="-1"])');
+    focusable?.focus();
+  }
+
+  private trapFocusWithinModal(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+    const target = event.target as HTMLElement | null;
+    const container = target?.closest('.modal-content');
+    if (!container) return;
+
     const focusableElements = Array.from(
       container.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
     ).filter(el => !el.hasAttribute('disabled'));
@@ -332,10 +390,9 @@ export class ActivitiesComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('document:keydown.escape')
-  onEscapePressed(): void {
-    if (this.selectedActivity) {
-      this.closeActivityDetails();
-    }
+  private restoreDialogTriggerFocus(): void {
+    if (!this.lastDialogTriggerElement) return;
+    this.lastDialogTriggerElement.focus();
+    this.lastDialogTriggerElement = null;
   }
 }

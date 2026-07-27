@@ -7,6 +7,7 @@ import { Book } from '../../models/book';
 import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
 import { Subscription } from 'rxjs';
+import { ToastService } from '../../services/toast.service';
 
 
 @Component({
@@ -20,7 +21,6 @@ import { Subscription } from 'rxjs';
 export class BooksComponent implements OnInit, OnDestroy {
   books: Book[] = [];
   userId: number | null = null;  // Use null initially and after logout. Important to type as nullable and to use Number(localStorage.getItem('userId'))
-  expandedBooks = new Set<number>();
   currentLayout: 'columns' | 'rows' = 'columns';
   private layoutSubscription?: Subscription;
 
@@ -45,11 +45,14 @@ export class BooksComponent implements OnInit, OnDestroy {
   isCompactMode: boolean = false;
   selectedBook: Book | null = null;
   private lastFocusedElement: HTMLElement | null = null;
+  private lastDialogTriggerElement: HTMLElement | null = null;
+  actionMenuForBookId: number | null = null;
 
   constructor(
     private bookService: BookService, 
     private router: Router,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -156,10 +159,12 @@ export class BooksComponent implements OnInit, OnDestroy {
     this.bookService.deleteBook(id).subscribe({
       next: () => {
         console.log('Book deleted successfully.');
+        this.toastService.success('Book deleted.');
         // Optionally, refresh the books list: this.getBooksByUser();
       },
       error: (error) => {
         console.error('Error deleting book:', error);
+        this.toastService.error('Failed to delete book.');
         // Revert the UI change if the deletion fails
         this.loadUserBooks(); // Refresh the list
       }
@@ -170,18 +175,23 @@ export class BooksComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
+    this.closeActionMenu();
+    this.lastDialogTriggerElement = document.activeElement as HTMLElement;
     this.deleteTarget = book;
+    setTimeout(() => this.focusFirstDialogControl('.confirm-modal .modal-content'));
   }
 
   confirmDelete(): void {
     if (!this.deleteTarget) return;
     const bookId = this.deleteTarget.id;
     this.deleteTarget = null;
+    this.restoreDialogTriggerFocus();
     this.deleteBook(bookId);
   }
 
   cancelDelete(): void {
     this.deleteTarget = null;
+    this.restoreDialogTriggerFocus();
   }
 
 
@@ -234,17 +244,21 @@ export class BooksComponent implements OnInit, OnDestroy {
           this.books = this.books.map((book) =>
             book.id === this.editingBookId ? updatedBookResponse : book
           );
+          this.toastService.success('Book updated.');
           this.closeModal();
         },
         error: (error) => {
           console.error('Error updating book:', error);
+          this.toastService.error('Failed to update book.');
         }
       });
     }
   }
 
   openModal(): void {
+    this.lastDialogTriggerElement = document.activeElement as HTMLElement;
     this.modalVisible = true;
+    setTimeout(() => this.focusFirstDialogControl('#modal .modal-content'));
   }
 
   closeModal(): void {
@@ -260,6 +274,7 @@ export class BooksComponent implements OnInit, OnDestroy {
     this.editStatus = '';
     this.editTags = '';
     this.editNotes = '';
+    this.restoreDialogTriggerFocus();
   }
 
   private loadBooks(): void {
@@ -276,19 +291,13 @@ export class BooksComponent implements OnInit, OnDestroy {
     localStorage.setItem('bnq_view_books', this.isCompactMode ? 'compact' : 'normal');
   }
 
-  toggleBookExpansion(bookId: number, event?: Event): void {
-    if (event) {
-      event.stopPropagation();
-    }
-    if (this.expandedBooks.has(bookId)) {
-      this.expandedBooks.delete(bookId);
-    } else {
-      this.expandedBooks.add(bookId);
-    }
+  toggleActionMenu(bookId: number, event: Event): void {
+    event.stopPropagation();
+    this.actionMenuForBookId = this.actionMenuForBookId === bookId ? null : bookId;
   }
 
-  isBookExpanded(bookId: number): boolean {
-    return this.expandedBooks.has(bookId);
+  closeActionMenu(): void {
+    this.actionMenuForBookId = null;
   }
 
   truncateText(text: string, maxLength: number = 150): string {
@@ -302,25 +311,67 @@ export class BooksComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    this.lastFocusedElement = document.activeElement as HTMLElement;
+    this.closeActionMenu();
+    if (this.selectedBook?.id === book.id) {
+      this.closeBookDetails();
+      return;
+    }
+    this.lastFocusedElement = (event?.currentTarget as HTMLElement) || document.activeElement as HTMLElement;
     this.selectedBook = book;
     document.body.style.overflow = 'hidden';
-    setTimeout(() => {
-      const firstFocusable = document.querySelector('.book-detail-modal .close-modal') as HTMLElement | null;
-      firstFocusable?.focus();
-    });
   }
 
   closeBookDetails(): void {
     this.selectedBook = null;
+    this.closeActionMenu();
     document.body.style.overflow = '';
     this.lastFocusedElement?.focus();
   }
 
-  onBookDetailKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Tab') return;
-    const container = document.querySelector('.book-detail-modal .modal-content');
+  onModalKeydown(event: KeyboardEvent): void {
+    this.trapFocusWithinModal(event);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    if (this.selectedBook) {
+      this.closeBookDetails();
+      return;
+    }
+    if (this.modalVisible) {
+      this.closeModal();
+      return;
+    }
+    if (this.deleteTarget) {
+      this.cancelDelete();
+      return;
+    }
+    if (this.actionMenuForBookId !== null) {
+      this.closeActionMenu();
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.card-actions-menu')) {
+      this.closeActionMenu();
+    }
+  }
+
+  private focusFirstDialogControl(containerSelector: string): void {
+    const container = document.querySelector(containerSelector);
     if (!container) return;
+    const focusable = container.querySelector<HTMLElement>('button, input, select, textarea, [href], [tabindex]:not([tabindex="-1"])');
+    focusable?.focus();
+  }
+
+  private trapFocusWithinModal(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+    const target = event.target as HTMLElement | null;
+    const container = target?.closest('.modal-content');
+    if (!container) return;
+
     const focusableElements = Array.from(
       container.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
     ).filter(el => !el.hasAttribute('disabled'));
@@ -339,10 +390,9 @@ export class BooksComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('document:keydown.escape')
-  onEscapePressed(): void {
-    if (this.selectedBook) {
-      this.closeBookDetails();
-    }
+  private restoreDialogTriggerFocus(): void {
+    if (!this.lastDialogTriggerElement) return;
+    this.lastDialogTriggerElement.focus();
+    this.lastDialogTriggerElement = null;
   }
 }

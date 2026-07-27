@@ -492,9 +492,9 @@ app.post('/api/users/login', async (req, res) => {
       `,
       [identifier, identifier, normalizedEmail, isValidEmail(identifier) ? 1 : 0]
     );
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!user) return res.status(401).json({ message: 'Invalid username, email, or password.' });
     const valid = bcrypt.compareSync(password, user.passwordHash);
-    if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!valid) return res.status(401).json({ message: 'Invalid username, email, or password.' });
     const userName = user.username || user.name;
     const token = createToken({ id: user.id, name: userName });
     return res.json({ token, userId: user.id, userName });
@@ -689,7 +689,10 @@ app.get('/api/users/:userId/books', authMiddleware, async (req, res) => {
 });
 
 app.get('/api/books', authMiddleware, async (req, res) => {
-  const rows = await dbAll('SELECT id, title, author, description, "publicationYear", genre, rating, pages, status, tags, notes, "createdAt", "userId" FROM books');
+  const rows = await dbAll(
+    'SELECT id, title, author, description, "publicationYear", genre, rating, pages, status, tags, notes, "createdAt", "userId" FROM books WHERE "userId" = $1',
+    [req.user.id]
+  );
   return res.json(processBooks(rows));
 });
 
@@ -783,7 +786,10 @@ app.get('/api/users/:userId/quotes', authMiddleware, async (req, res) => {
 });
 
 app.get('/api/quotes', authMiddleware, async (req, res) => {
-  const rows = await dbAll('SELECT id, title, author, description, source, category, "date", tags, notes, "userId" FROM quotes');
+  const rows = await dbAll(
+    'SELECT id, title, author, description, source, category, "date", tags, notes, "userId" FROM quotes WHERE "userId" = $1',
+    [req.user.id]
+  );
   return res.json(processQuotes(rows));
 });
 
@@ -865,7 +871,10 @@ app.get('/api/users/:userId/movies', authMiddleware, async (req, res) => {
 });
 
 app.get('/api/movies', authMiddleware, async (req, res) => {
-  const rows = await dbAll('SELECT id, title, director, description, "releaseYear", genre, rating, notes, "userId" FROM movies');
+  const rows = await dbAll(
+    'SELECT id, title, director, description, "releaseYear", genre, rating, notes, "userId" FROM movies WHERE "userId" = $1',
+    [req.user.id]
+  );
   return res.json(processMovies(rows));
 });
 
@@ -943,7 +952,10 @@ app.get('/api/users/:userId/diaries', authMiddleware, async (req, res) => {
 });
 
 app.get('/api/diaries', authMiddleware, async (req, res) => {
-  const rows = await dbAll('SELECT id, title, body, "userId", "createdAt", "date", mood, weather, location, tags, "privateNotes" FROM diaries');
+  const rows = await dbAll(
+    'SELECT id, title, body, "userId", "createdAt", "date", mood, weather, location, tags, "privateNotes" FROM diaries WHERE "userId" = $1',
+    [req.user.id]
+  );
   return res.json(processDiaries(rows));
 });
 

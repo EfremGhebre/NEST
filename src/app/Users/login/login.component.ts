@@ -2,37 +2,48 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   providers: []
 })
 export class LoginComponent {
-
   loginData:any = { name: '', password: '' };
+  errorMessage = '';
+  isSubmitting = false;
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private toastService: ToastService
+  ) {}
 
   login(): void {
     const { name, password } = this.loginData;
 
-    //Simple validation
+    this.errorMessage = '';
     if (!name || !password) {
-      alert('All fields are required.');
+      this.errorMessage = 'Enter your username or email and password.';
       return;
     }
+    this.isSubmitting = true;
+
     this.authService.login(name, password).subscribe({
       next: () => {
-        // Navigate to dashboard after successful login
+        this.isSubmitting = false;
+        this.toastService.success('Signed in successfully.');
         this.router.navigate(['/dashboard']);
       },
       error: (err: any) => {
-        console.error('Login error:', err);
-        alert(err.message || 'Invalid credentials. Please try again.');
+        this.isSubmitting = false;
+        this.errorMessage = err.message || 'Invalid username, email, or password.';
+        this.toastService.error(this.errorMessage);
       },
     });
   }

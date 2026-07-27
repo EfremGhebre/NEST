@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BookService } from '../../services/bookservice.service';
 import { Book } from '../../models/book';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-add-book',
@@ -45,7 +46,8 @@ export class AddBookComponent {
 
   constructor(
     private bookService: BookService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {}
 
   onSubmit(): void {
@@ -81,10 +83,12 @@ export class AddBookComponent {
 
     this.bookService.addBook(book).subscribe({
       next: () => {
+        this.toastService.success('Book created.');
         this.router.navigate(['/layout/books']);
       },
       error: () => {
         this.error = 'Failed to add book. Please try again.';
+        this.toastService.error(this.error);
         this.loading = false;
       }
     });

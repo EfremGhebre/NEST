@@ -1,6 +1,7 @@
 <div class="auth-box">
-  <h2 class="auth-title">Login</h2>
+  <h2 class="auth-title">Sign In</h2>
   <form (ngSubmit)="login()" #loginForm="ngForm" class="auth-form">
+    <div class="form-error" *ngIf="errorMessage">{{ errorMessage }}</div>
     <div class="mb-3">
       <label for="name" class="form-label">Username or Email</label>
       <input
@@ -10,6 +11,7 @@
         class="form-control"
         name="name"
         required
+        autocomplete="username"
         placeholder="Enter your username or email"
       />
     </div>
@@ -22,10 +24,13 @@
         class="form-control"
         name="password"
         required
+        autocomplete="current-password"
         placeholder="Enter your password"
       />
     </div>
-    <button type="submit" class="btn btn-success w-100">Login</button>
+    <button type="submit" class="btn btn-success w-100" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Signing in...' : 'Sign In' }}
+    </button>
     <button type="button" class="back-home-link" (click)="goHome()">
       Back to Home Page
     </button>

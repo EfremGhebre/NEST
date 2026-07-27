@@ -1,119 +1,94 @@
 <div class="dashboard-container">
-  <!-- Welcome Section -->
-  <div class="welcome-section">
+  <section class="welcome-section">
     <div class="welcome-content">
-      <h1 class="welcome-title">
-        {{ getGreeting() }} 👋
-      </h1>
+      <h1 class="welcome-title">{{ getGreeting() }} 👋</h1>
       <p class="welcome-subtitle">
-        Welcome back to your personal library. Here's what's happening with your collection.
+        Capture your thoughts, organize your ideas, and keep your memories safe.
       </p>
     </div>
     <div class="welcome-illustration">
       <i class="bi bi-house-heart-fill"></i>
     </div>
-  </div>
+  </section>
 
-  <!-- Stats Cards -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="bi bi-book"></i>
-      </div>
-      <div class="stat-content">
-        <h3 class="stat-number">{{ stats.totalBooks }}</h3>
-        <p class="stat-label">Total Books</p>
+  <section class="quick-note-card">
+    <div class="quick-note-head">
+      <i class="bi bi-pencil-square"></i>
+      <div>
+        <h2>Write a quick note...</h2>
+        <p>Choose where to save your next note.</p>
       </div>
     </div>
-    
+    <div class="quick-note-actions">
+      <button *ngFor="let option of quickCollectionActions" type="button" class="note-action" (click)="navigateTo({ route: option.route })">
+        <i class="bi" [class]="option.icon"></i>
+        {{ option.label }}
+      </button>
+    </div>
+  </section>
+
+  <section class="stats-grid" *ngIf="!loading">
     <div class="stat-card">
-      <div class="stat-icon">
+      <div class="stat-icon"><i class="bi bi-book"></i></div>
+      <div class="stat-content"><h3 class="stat-number">{{ stats.totalBooks }}</h3><p class="stat-label">Books</p></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="bi bi-quote"></i></div>
+      <div class="stat-content"><h3 class="stat-number">{{ stats.totalQuotes }}</h3><p class="stat-label">Quotes</p></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="bi bi-film"></i></div>
+      <div class="stat-content"><h3 class="stat-number">{{ stats.totalMovies }}</h3><p class="stat-label">Movies</p></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="bi bi-journal-text"></i></div>
+      <div class="stat-content"><h3 class="stat-number">{{ stats.totalDiaries }}</h3><p class="stat-label">Diaries</p></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="bi bi-activity"></i></div>
+      <div class="stat-content"><h3 class="stat-number">{{ stats.totalActivities }}</h3><p class="stat-label">Activities</p></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+      <div class="stat-content"><h3 class="stat-number">{{ stats.recentActivity }}</h3><p class="stat-label">Recent</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title"><i class="bi bi-lightbulb me-2"></i>Daily Inspiration</h2>
+    <div class="inspiration-card">
+      <div class="inspiration-quote">
         <i class="bi bi-quote"></i>
-      </div>
-      <div class="stat-content">
-        <h3 class="stat-number">{{ stats.totalQuotes }}</h3>
-        <p class="stat-label">Saved Quotes</p>
+        <p>"{{ currentInspiration.text }}"</p>
+        <cite>— {{ currentInspiration.author }}</cite>
       </div>
     </div>
-    
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="bi bi-film"></i>
-      </div>
-      <div class="stat-content">
-        <h3 class="stat-number">{{ stats.totalMovies }}</h3>
-        <p class="stat-label">Total Movies</p>
-      </div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="bi bi-journal-text"></i>
-      </div>
-      <div class="stat-content">
-        <h3 class="stat-number">{{ stats.totalDiaries }}</h3>
-        <p class="stat-label">Diary Entries</p>
-      </div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="bi bi-activity"></i>
-      </div>
-      <div class="stat-content">
-        <h3 class="stat-number">{{ stats.totalActivities }}</h3>
-        <p class="stat-label">Total Activities</p>
-      </div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="stat-icon">
-        <i class="bi bi-graph-up"></i>
-      </div>
-      <div class="stat-content">
-        <h3 class="stat-number">{{ stats.recentActivity }}</h3>
-        <p class="stat-label">Recent Activity</p>
-      </div>
-    </div>
-  </div>
+  </section>
 
-  <!-- Quick Actions -->
-  <div class="section">
-    <h2 class="section-title">
-      <i class="bi bi-lightning-charge me-2"></i>
-      Quick Actions
-    </h2>
+  <section class="section">
+    <h2 class="section-title"><i class="bi bi-lightning-charge me-2"></i>Quick Actions</h2>
     <div class="quick-actions-grid">
-      <div 
-        *ngFor="let action of quickActions" 
+      <button
+        *ngFor="let action of quickActions"
+        type="button"
         class="quick-action-card"
         [class]="'action-' + action.color"
-        (click)="navigateTo(action)"
-        role="button"
-        tabindex="0"
+        (click)="openActionCard(action, $event)"
       >
-        <div class="action-icon">
-          <i [class]="action.icon"></i>
-        </div>
+        <div class="action-icon"><i [class]="action.icon"></i></div>
         <div class="action-content">
           <h4 class="action-title">{{ action.title }}</h4>
           <p class="action-description">{{ action.description }}</p>
         </div>
-        <div class="action-arrow">
-          <i class="bi bi-arrow-right"></i>
-        </div>
-      </div>
+        <div class="action-arrow"><i class="bi bi-arrow-right"></i></div>
+      </button>
     </div>
-  </div>
+  </section>
 
-  <!-- Recent Activity -->
-  <div class="section">
-    <h2 class="section-title">
-      <i class="bi bi-clock-history me-2"></i>
-      Recent Activity
-    </h2>
-    <div class="recent-activity">
-      <div *ngFor="let item of recentItems" class="recent-item">
+  <section class="section">
+    <h2 class="section-title"><i class="bi bi-clock-history me-2"></i>Recent Activity</h2>
+    <div class="recent-activity" *ngIf="recentItems.length > 0; else noRecent">
+      <div *ngFor="let item of recentItems; trackBy: trackByTitle" class="recent-item">
         <div class="recent-icon" [class]="'recent-icon-' + item.type">
           <i [class]="item.type === 'book' ? 'bi-book' : item.type === 'quote' ? 'bi-quote' : item.type === 'movie' ? 'bi-film' : item.type === 'diary' ? 'bi-journal-text' : 'bi-activity'"></i>
         </div>
@@ -124,59 +99,26 @@
         <div class="recent-date">{{ item.date }}</div>
       </div>
     </div>
-  </div>
+    <ng-template #noRecent><div class="empty-inline">Nothing here yet. Add your first note to get started.</div></ng-template>
+  </section>
 
-  <!-- Tips & Inspiration -->
-  <div class="section">
-    <h2 class="section-title">
-      <i class="bi bi-lightbulb me-2"></i>
-      Daily Inspiration
-    </h2>
-    <div class="inspiration-card">
-      <div class="inspiration-quote">
-        <i class="bi bi-quote"></i>
-        <p>"{{ currentInspiration.text }}"</p>
-        <cite>— {{ currentInspiration.author }}</cite>
+  <div class="action-overlay" *ngIf="selectedAction" (click)="closeActionCard()">
+    <div class="action-panel" role="dialog" aria-modal="true" aria-label="Quick action details" (click)="$event.stopPropagation()">
+      <header class="panel-head">
+        <div>
+          <span class="panel-icon"><i class="bi" [class]="selectedAction.icon"></i></span>
+          <h3>{{ selectedAction.title }}</h3>
+          <p>{{ selectedAction.description }}</p>
+        </div>
+        <button type="button" class="close-panel" (click)="closeActionCard()" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+      </header>
+      <div class="panel-meta">
+        <span>Start writing to capture this idea in your notes.</span>
+        <button type="button" class="new-note-btn" (click)="startActionFromModal()">Open action</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Quick Stats -->
-  <div class="section">
-    <h2 class="section-title">
-      <i class="bi bi-graph-up me-2"></i>
-      Your Reading Journey
-    </h2>
-    <div class="journey-stats">
-      <div class="journey-item">
-        <div class="journey-icon">
-          <i class="bi bi-calendar-check"></i>
-        </div>
-        <div class="journey-content">
-          <h4>Reading Streak</h4>
-          <p>7 days in a row</p>
-        </div>
-      </div>
-      
-      <div class="journey-item">
-        <div class="journey-icon">
-          <i class="bi bi-star-fill"></i>
-        </div>
-        <div class="journey-content">
-          <h4>Favorite Genre</h4>
-          <p>Fiction & Philosophy</p>
-        </div>
-      </div>
-      
-      <div class="journey-item">
-        <div class="journey-icon">
-          <i class="bi bi-trophy"></i>
-        </div>
-        <div class="journey-content">
-          <h4>Achievement</h4>
-          <p>Book Collector</p>
-        </div>
-      </div>
+      <footer class="panel-footer">
+        <button type="button" class="go-collection-btn" (click)="startActionFromModal()">Continue</button>
+      </footer>
     </div>
   </div>
 </div>

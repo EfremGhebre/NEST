@@ -1,13 +1,13 @@
 <div class="profile-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">
-        <i class="bi bi-person-circle"></i>
-        My Profile
-      </h1>
-      <p class="page-subtitle">Manage your account details and subscription</p>
+  <header class="profile-header content-card">
+    <div class="profile-id">
+      <span class="profile-avatar">{{ (profile?.username || 'U').charAt(0) | uppercase }}</span>
+      <div>
+        <h1>My Profile</h1>
+        <p>Manage your account details, preferences, and account safety.</p>
+      </div>
     </div>
-  </div>
+  </header>
 
   <div *ngIf="isLoading" class="loading-state">
     <div class="spinner"></div>
@@ -25,14 +25,14 @@
   </div>
 
   <div *ngIf="!isLoading && profile" class="profile-grid">
-    <section class="content-card profile-card">
+    <section class="content-card profile-card profile-section">
       <div class="section-header">
-        <h2>Account Information</h2>
+        <h2>Personal Information</h2>
         <div class="section-actions">
-          <button *ngIf="!isEditingProfile" class="btn btn-primary" (click)="startEditProfile()">Edit</button>
+          <button *ngIf="!isEditingProfile" class="btn btn-primary" (click)="startEditProfile()">Edit profile</button>
           <button *ngIf="isEditingProfile" class="btn btn-secondary" (click)="cancelEditProfile()">Cancel</button>
           <button *ngIf="isEditingProfile" class="btn btn-primary" [disabled]="isSavingProfile" (click)="saveProfile()">
-            {{ isSavingProfile ? 'Saving...' : 'Save' }}
+            {{ isSavingProfile ? 'Saving...' : 'Save changes' }}
           </button>
         </div>
       </div>
@@ -55,8 +55,8 @@
           <span class="field-value">{{ profile.email }}</span>
         </div>
         <div class="field-row">
-          <span class="field-label">Date Created</span>
-          <span class="field-value">{{ profile.createdAt ? (profile.createdAt | date:'medium') : 'Unknown' }}</span>
+          <span class="field-label">Member Since</span>
+          <span class="field-value">{{ profile.createdAt ? (profile.createdAt | date:'mediumDate') : 'Unknown' }}</span>
         </div>
       </div>
 
@@ -82,19 +82,19 @@
       </div>
     </section>
 
-    <section class="content-card profile-card">
+    <section class="content-card profile-card profile-section">
       <div class="section-header">
-        <h2>Subscription</h2>
+        <h2>Account Plan</h2>
         <div class="section-actions">
           <button *ngIf="!isEditingSubscription" class="btn btn-primary" (click)="startEditSubscription()">
-            {{ subscription ? 'Edit' : 'Add Subscription' }}
+            {{ subscription ? 'Edit' : 'Add plan details' }}
           </button>
           <button *ngIf="isEditingSubscription" class="btn btn-secondary" (click)="cancelEditSubscription()">Cancel</button>
           <button *ngIf="isEditingSubscription" class="btn btn-primary" [disabled]="isSavingSubscription" (click)="saveSubscription()">
-            {{ isSavingSubscription ? 'Saving...' : 'Save' }}
+            {{ isSavingSubscription ? 'Saving...' : 'Save changes' }}
           </button>
           <button *ngIf="subscription && !isEditingSubscription" class="btn btn-danger" [disabled]="isSavingSubscription" (click)="deleteSubscription()">
-            Remove
+            Cancel plan
           </button>
         </div>
       </div>
@@ -131,7 +131,7 @@
           </div>
         </div>
         <ng-template #noSubscription>
-          <p class="empty-copy">No subscription is currently linked to this account.</p>
+          <p class="empty-copy">No plan details are currently linked to this account.</p>
         </ng-template>
       </div>
 
@@ -171,30 +171,38 @@
       </div>
     </section>
 
-    <section class="content-card profile-card danger-card">
+    <section class="content-card profile-card danger-card profile-section">
       <div class="section-header">
-        <h2>Delete Account</h2>
+        <h2>Danger Zone</h2>
       </div>
       <p class="danger-copy">This permanently deletes your account and all related data. This action cannot be undone.</p>
       <button class="btn btn-danger" [disabled]="isDeletingAccount" (click)="confirmDeleteAccount()">
-        {{ isDeletingAccount ? 'Deleting...' : 'Delete Account' }}
+        {{ isDeletingAccount ? 'Deleting...' : 'Permanently Delete Account' }}
       </button>
     </section>
   </div>
 
-  <div *ngIf="showDeleteConfirm" class="modal confirm-modal">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Confirm account deletion">
+  <div *ngIf="showDeleteConfirm" class="modal confirm-modal" (click)="cancelDeleteAccount()" (keydown)="onModalKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Confirm account deletion" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Confirm Account Deletion</h3>
+        <h3>Permanently Delete Account</h3>
         <button class="close-modal" (click)="cancelDeleteAccount()">×</button>
       </div>
       <div class="modal-body">
-        <p>Are you sure you want to permanently delete your account and all related data?</p>
+        <p>This will remove your profile and all your notes permanently.</p>
+        <label class="form-label" for="deleteConfirmInput">Type <strong>{{ deleteConfirmationPhrase }}</strong></label>
+        <input
+          id="deleteConfirmInput"
+          class="form-input"
+          [ngModel]="deleteConfirmText"
+          (ngModelChange)="deleteConfirmText = $event"
+          placeholder="Permanently delete my account"
+        />
       </div>
       <div class="modal-footer confirm-actions">
         <button class="btn btn-secondary" (click)="cancelDeleteAccount()">Cancel</button>
         <button class="btn btn-danger" [disabled]="isDeletingAccount" (click)="deleteAccount()">
-          {{ isDeletingAccount ? 'Deleting...' : 'Confirm Delete' }}
+          {{ isDeletingAccount ? 'Deleting...' : 'Delete Forever' }}
         </button>
       </div>
     </div>

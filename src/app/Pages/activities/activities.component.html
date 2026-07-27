@@ -14,6 +14,11 @@
     </button>
   </div>
 
+  <div *ngIf="successMessage" class="success-state">
+    <i class="bi bi-check-circle"></i>
+    <p>{{ successMessage }}</p>
+  </div>
+
   <!-- Filters and Search -->
   <div class="filters-section">
     <div class="search-box">
@@ -75,76 +80,114 @@
     <p>Start by adding your first activity!</p>
   </div>
 
-  <!-- Activities Grid -->
-  <div *ngIf="!loading && !error && filteredActivities.length > 0" class="activities-grid content-grid" [class.rows-layout]="currentLayout === 'rows'">
-    <div *ngFor="let activity of filteredActivities" 
-         class="activity-card" 
-         [class.expanded]="selectedActivity?.id === activity.id"
-         (click)="openActivityDetails(activity, $event)">
-      <div class="activity-card-body">
-        <div class="activity-cover">
-          <i class="bi bi-activity"></i>
-          <span class="activity-cover-letter">{{ activity.title.charAt(0) }}</span>
+  <!-- Notebook List -->
+  <div *ngIf="!loading && !error && filteredActivities.length > 0" class="activities-grid">
+    <article
+      *ngFor="let activity of filteredActivities"
+      class="activity-card"
+      (click)="openActivityDetails(activity, $event)"
+      tabindex="0"
+      (keydown.enter)="openActivityDetails(activity, $event)"
+    >
+      <div class="activity-header">
+        <div class="activity-heading">
+          <span class="activity-icon"><i class="bi bi-activity"></i></span>
+          <div>
+            <h3 class="activity-title">{{ activity.title }}</h3>
+            <div class="activity-meta">
+              <span class="activity-category">{{ activity.category }}</span>
+              <span class="activity-date">{{ formatDate(activity.date) }}</span>
+            </div>
+          </div>
         </div>
-
-        <div class="activity-info">
-          <div class="activity-header">
-            <div class="activity-title-section">
-              <h3 class="activity-title">{{ activity.title }}</h3>
-              <div class="activity-meta">
-                <span class="activity-category">{{ activity.category }}</span>
-                <span class="activity-date">{{ formatDate(activity.date) }}</span>
-              </div>
-            </div>
-            <div class="activity-actions" (click)="$event.stopPropagation()">
-              <button class="action-button expand" 
-                      title="View Details"
-                      (click)="openActivityDetails(activity, $event)">
-                <i class="bi bi-arrows-fullscreen"></i>
-              </button>
-              <button class="action-button edit" (click)="editActivity(activity)" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="action-button delete" (click)="requestDelete(activity, $event)" title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-
-          <div class="activity-summary">
-            <div class="activity-metrics">
-              <span class="activity-metric">
-                <i class="bi bi-flag"></i>
-                <span class="status-badge" [class]="getStatusClass(activity.status)">
-                  {{ activity.status.replace('-', ' ') }}
-                </span>
-              </span>
-              
-              <span class="activity-metric">
-                <i class="bi bi-exclamation-circle"></i>
-                <span class="priority-badge" [class]="getPriorityClass(activity.priority)">
-                  {{ activity.priority }}
-                </span>
-              </span>
-              
-              <span class="activity-metric" *ngIf="activity.duration">
-                <i class="bi bi-clock"></i>
-                {{ formatDuration(activity.duration) }}
-              </span>
-              
-              <span class="activity-metric" *ngIf="activity.location">
-                <i class="bi bi-geo-alt"></i>
-                {{ activity.location }}
-              </span>
-            </div>
-          </div>
-
-          <div class="activity-description">
-            <p>{{ truncateText(activity.description, 180) }}</p>
+        <div class="activity-actions card-actions-menu" (click)="$event.stopPropagation()">
+          <button class="action-button more" (click)="toggleActionMenu(activity.id, $event)" title="More actions" aria-label="More actions">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="action-menu" *ngIf="actionMenuForActivityId === activity.id">
+            <button type="button" (click)="editActivity(activity)">
+              <i class="bi bi-pencil"></i>
+              Edit
+            </button>
+            <button type="button" (click)="requestDelete(activity, $event)">
+              <i class="bi bi-trash"></i>
+              Delete
+            </button>
           </div>
         </div>
       </div>
-    </div>
+
+      <div class="activity-metrics">
+        <span class="status-badge" [class]="getStatusClass(activity.status)">{{ activity.status.replace('-', ' ') }}</span>
+        <span class="priority-badge" [class]="getPriorityClass(activity.priority)">{{ activity.priority }}</span>
+        <span *ngIf="activity.duration" class="activity-metric">{{ formatDuration(activity.duration) }}</span>
+        <span *ngIf="activity.location" class="activity-metric">{{ activity.location }}</span>
+      </div>
+
+      <p class="activity-preview">{{ truncateText(activity.description, 220) }}</p>
+    </article>
+  </div>
+
+  <div class="activity-overlay" *ngIf="selectedActivity" (click)="closeActivityDetails()">
+    <article class="activity-panel" role="dialog" aria-modal="true" aria-label="Activity details" (click)="$event.stopPropagation()">
+      <div class="activity-header">
+        <div class="activity-heading">
+          <span class="activity-icon"><i class="bi bi-activity"></i></span>
+          <div>
+            <h3 class="activity-title">{{ selectedActivity.title }}</h3>
+            <div class="activity-meta">
+              <span class="activity-category">{{ selectedActivity.category }}</span>
+              <span class="activity-date">{{ formatDate(selectedActivity.date) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="activity-actions card-actions-menu" (click)="$event.stopPropagation()">
+          <button class="action-button more" (click)="toggleActionMenu(selectedActivity.id, $event)" title="More actions" aria-label="More actions">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="action-menu" *ngIf="actionMenuForActivityId === selectedActivity.id">
+            <button type="button" (click)="editActivity(selectedActivity)">
+              <i class="bi bi-pencil"></i>
+              Edit
+            </button>
+            <button type="button" (click)="requestDelete(selectedActivity, $event)">
+              <i class="bi bi-trash"></i>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="activity-metrics">
+        <span class="status-badge" [class]="getStatusClass(selectedActivity.status)">{{ selectedActivity.status.replace('-', ' ') }}</span>
+        <span class="priority-badge" [class]="getPriorityClass(selectedActivity.priority)">{{ selectedActivity.priority }}</span>
+        <span *ngIf="selectedActivity.duration" class="activity-metric">{{ formatDuration(selectedActivity.duration) }}</span>
+        <span *ngIf="selectedActivity.location" class="activity-metric">{{ selectedActivity.location }}</span>
+      </div>
+
+      <p class="activity-preview">{{ selectedActivity.description }}</p>
+
+      <section class="activity-expanded">
+        <div class="detail-grid">
+          <p><strong>Description:</strong> {{ selectedActivity.description }}</p>
+          <p><strong>Category:</strong> {{ selectedActivity.category }}</p>
+          <p><strong>Date:</strong> {{ selectedActivity.date | date:'mediumDate' }}</p>
+          <p><strong>Status:</strong> {{ selectedActivity.status }}</p>
+          <p><strong>Priority:</strong> {{ selectedActivity.priority }}</p>
+          <p *ngIf="selectedActivity.duration"><strong>Duration:</strong> {{ formatDuration(selectedActivity.duration) }}</p>
+          <p *ngIf="selectedActivity.location"><strong>Location:</strong> {{ selectedActivity.location }}</p>
+          <p *ngIf="selectedActivity.createdAt"><strong>Created:</strong> {{ selectedActivity.createdAt | date:'medium' }}</p>
+          <p *ngIf="selectedActivity.updatedAt"><strong>Updated:</strong> {{ selectedActivity.updatedAt | date:'medium' }}</p>
+          <p *ngIf="selectedActivity.notes"><strong>Notes:</strong> {{ selectedActivity.notes }}</p>
+          <p *ngIf="selectedActivity.tags && selectedActivity.tags.length > 0"><strong>Tags:</strong> {{ selectedActivity.tags.join(', ') }}</p>
+        </div>
+        <div class="expanded-actions">
+          <button class="btn btn-secondary" (click)="closeActivityDetails()">Collapse</button>
+          <button class="btn btn-primary" (click)="editActivity(selectedActivity)">Edit</button>
+          <button class="btn btn-danger" (click)="requestDelete(selectedActivity, $event)">Delete</button>
+        </div>
+      </section>
+    </article>
   </div>
 
   <!-- Results Count -->
@@ -152,80 +195,9 @@
     <p>Showing {{ filteredActivities.length }} of {{ activities.length }} activities</p>
   </div>
 
-  <div class="modal confirm-modal activity-detail-modal" *ngIf="selectedActivity" (click)="closeActivityDetails()" (keydown)="onActivityDetailKeydown($event)">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Activity details" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ selectedActivity.title }}</h3>
-        <button class="close-modal" (click)="closeActivityDetails()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="detail-row">
-          <i class="bi bi-info-circle"></i>
-          <span class="detail-label">Description:</span>
-          <span class="detail-value">{{ selectedActivity.description }}</span>
-        </div>
-        <div class="detail-row">
-          <i class="bi bi-bookmark"></i>
-          <span class="detail-label">Category:</span>
-          <span class="detail-value">{{ selectedActivity.category }}</span>
-        </div>
-        <div class="detail-row">
-          <i class="bi bi-calendar3"></i>
-          <span class="detail-label">Date:</span>
-          <span class="detail-value">{{ selectedActivity.date | date:'mediumDate' }}</span>
-        </div>
-        <div class="detail-row">
-          <i class="bi bi-flag"></i>
-          <span class="detail-label">Status:</span>
-          <span class="detail-value">{{ selectedActivity.status }}</span>
-        </div>
-        <div class="detail-row">
-          <i class="bi bi-exclamation-circle"></i>
-          <span class="detail-label">Priority:</span>
-          <span class="detail-value">{{ selectedActivity.priority }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedActivity.duration">
-          <i class="bi bi-clock"></i>
-          <span class="detail-label">Duration:</span>
-          <span class="detail-value">{{ formatDuration(selectedActivity.duration) }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedActivity.location">
-          <i class="bi bi-geo-alt"></i>
-          <span class="detail-label">Location:</span>
-          <span class="detail-value">{{ selectedActivity.location }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedActivity.createdAt">
-          <i class="bi bi-clock-history"></i>
-          <span class="detail-label">Created:</span>
-          <span class="detail-value">{{ selectedActivity.createdAt | date:'medium' }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedActivity.updatedAt">
-          <i class="bi bi-arrow-repeat"></i>
-          <span class="detail-label">Updated:</span>
-          <span class="detail-value">{{ selectedActivity.updatedAt | date:'medium' }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedActivity.notes">
-          <i class="bi bi-sticky"></i>
-          <span class="detail-label">Notes:</span>
-          <span class="detail-value">{{ selectedActivity.notes }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedActivity.tags && selectedActivity.tags.length > 0">
-          <i class="bi bi-tags"></i>
-          <span class="detail-label">Tags:</span>
-          <div class="tags-container">
-            <span *ngFor="let tag of selectedActivity.tags" class="tag">{{ tag }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeActivityDetails()">Close</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Edit Modal -->
-  <div id="modal" class="modal" [style.display]="modalVisible ? 'flex' : 'none'">
-    <div class="modal-content">
+  <div id="modal" class="modal" [style.display]="modalVisible ? 'flex' : 'none'" (click)="closeModal()" (keydown)="onModalKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Edit activity" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Edit Activity</h3>
         <button class="close-modal" (click)="closeModal()">×</button>
@@ -292,8 +264,8 @@
   </div>
 
   <!-- Delete Confirmation Modal -->
-  <div class="modal confirm-modal" *ngIf="deleteTarget">
-    <div class="modal-content">
+  <div class="modal confirm-modal" *ngIf="deleteTarget" (click)="cancelDelete()" (keydown)="onModalKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Delete activity confirmation" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Delete Activity</h3>
         <button class="close-modal" (click)="cancelDelete()">×</button>

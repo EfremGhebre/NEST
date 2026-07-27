@@ -6,6 +6,7 @@ import { Movie } from '../../models/movie';
 import { ThemeService } from '../../services/theme.service';
 import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-movies',
@@ -19,9 +20,10 @@ export class MoviesComponent implements OnInit, OnDestroy {
   isLoading = false;
   error: string | null = null;
   isCompactMode = false;
-  expandedMovies = new Set<number>();
   selectedMovie: Movie | null = null;
   private lastFocusedElement: HTMLElement | null = null;
+  private lastDialogTriggerElement: HTMLElement | null = null;
+  actionMenuForMovieId: number | null = null;
   currentLayout: 'columns' | 'rows' = 'columns';
   private layoutSubscription?: Subscription;
 
@@ -38,7 +40,8 @@ export class MoviesComponent implements OnInit, OnDestroy {
 
   constructor(
     private movieService: MovieService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -90,7 +93,7 @@ export class MoviesComponent implements OnInit, OnDestroy {
     this.editGenre = m.genre || '';
     this.editRating = m.rating || '';
     this.editNotes = m.notes || '';
-    this.modalVisible = true;
+    this.openModal();
   }
 
   saveEditedMovie(): void {
@@ -109,6 +112,7 @@ export class MoviesComponent implements OnInit, OnDestroy {
     this.movieService.updateMovie(this.editingId, updated).subscribe({
       next: (updatedMovie) => {
         this.movies = this.movies.map(m => m.id === this.editingId ? updatedMovie : m);
+        this.toastService.success('Movie updated.');
         this.closeModal();
       }
     });
@@ -116,25 +120,42 @@ export class MoviesComponent implements OnInit, OnDestroy {
 
   deleteMovie(id: number): void {
     this.movies = this.movies.filter(m => m.id !== id);
-    this.movieService.deleteMovie(id).subscribe({ error: () => this.loadMovies() });
+    this.movieService.deleteMovie(id).subscribe({
+      next: () => this.toastService.success('Movie deleted.'),
+      error: () => {
+        this.toastService.error('Failed to delete movie.');
+        this.loadMovies();
+      }
+    });
   }
 
   requestDelete(movie: Movie, event?: Event): void {
     if (event) {
       event.stopPropagation();
     }
+    this.closeActionMenu();
+    this.lastDialogTriggerElement = document.activeElement as HTMLElement;
     this.deleteTarget = movie;
+    setTimeout(() => this.focusFirstDialogControl('.confirm-modal .modal-content'));
   }
 
   confirmDelete(): void {
     if (!this.deleteTarget) return;
     const movieId = this.deleteTarget.id;
     this.deleteTarget = null;
+    this.restoreDialogTriggerFocus();
     this.deleteMovie(movieId);
   }
 
   cancelDelete(): void {
     this.deleteTarget = null;
+    this.restoreDialogTriggerFocus();
+  }
+
+  openModal(): void {
+    this.lastDialogTriggerElement = document.activeElement as HTMLElement;
+    this.modalVisible = true;
+    setTimeout(() => this.focusFirstDialogControl('#modal .modal-content'));
   }
 
   closeModal(): void { 
@@ -147,21 +168,16 @@ export class MoviesComponent implements OnInit, OnDestroy {
     this.editGenre = '';
     this.editRating = '';
     this.editNotes = '';
+    this.restoreDialogTriggerFocus();
   }
 
-  toggleMovieExpansion(movieId: number, event?: Event): void {
-    if (event) {
-      event.stopPropagation();
-    }
-    if (this.expandedMovies.has(movieId)) {
-      this.expandedMovies.delete(movieId);
-    } else {
-      this.expandedMovies.add(movieId);
-    }
+  toggleActionMenu(movieId: number, event: Event): void {
+    event.stopPropagation();
+    this.actionMenuForMovieId = this.actionMenuForMovieId === movieId ? null : movieId;
   }
 
-  isMovieExpanded(movieId: number): boolean {
-    return this.expandedMovies.has(movieId);
+  closeActionMenu(): void {
+    this.actionMenuForMovieId = null;
   }
 
   truncateText(text: string, maxLength: number = 150): string {
@@ -175,25 +191,67 @@ export class MoviesComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    this.lastFocusedElement = document.activeElement as HTMLElement;
+    this.closeActionMenu();
+    if (this.selectedMovie?.id === movie.id) {
+      this.closeMovieDetails();
+      return;
+    }
+    this.lastFocusedElement = (event?.currentTarget as HTMLElement) || document.activeElement as HTMLElement;
     this.selectedMovie = movie;
     document.body.style.overflow = 'hidden';
-    setTimeout(() => {
-      const firstFocusable = document.querySelector('.movie-detail-modal .close-modal') as HTMLElement | null;
-      firstFocusable?.focus();
-    });
   }
 
   closeMovieDetails(): void {
     this.selectedMovie = null;
+    this.closeActionMenu();
     document.body.style.overflow = '';
     this.lastFocusedElement?.focus();
   }
 
-  onMovieDetailKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Tab') return;
-    const container = document.querySelector('.movie-detail-modal .modal-content');
+  onModalKeydown(event: KeyboardEvent): void {
+    this.trapFocusWithinModal(event);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    if (this.selectedMovie) {
+      this.closeMovieDetails();
+      return;
+    }
+    if (this.modalVisible) {
+      this.closeModal();
+      return;
+    }
+    if (this.deleteTarget) {
+      this.cancelDelete();
+      return;
+    }
+    if (this.actionMenuForMovieId !== null) {
+      this.closeActionMenu();
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.card-actions-menu')) {
+      this.closeActionMenu();
+    }
+  }
+
+  private focusFirstDialogControl(containerSelector: string): void {
+    const container = document.querySelector(containerSelector);
     if (!container) return;
+    const focusable = container.querySelector<HTMLElement>('button, input, select, textarea, [href], [tabindex]:not([tabindex="-1"])');
+    focusable?.focus();
+  }
+
+  private trapFocusWithinModal(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+    const target = event.target as HTMLElement | null;
+    const container = target?.closest('.modal-content');
+    if (!container) return;
+
     const focusableElements = Array.from(
       container.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
     ).filter(el => !el.hasAttribute('disabled'));
@@ -212,11 +270,10 @@ export class MoviesComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('document:keydown.escape')
-  onEscapePressed(): void {
-    if (this.selectedMovie) {
-      this.closeMovieDetails();
-    }
+  private restoreDialogTriggerFocus(): void {
+    if (!this.lastDialogTriggerElement) return;
+    this.lastDialogTriggerElement.focus();
+    this.lastDialogTriggerElement = null;
   }
 }
 

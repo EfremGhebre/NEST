@@ -1,12 +1,10 @@
 <div class="diaries-container">
   <!-- Header -->
-  <div class="page-header">
+  <div class="page-header diaries-header">
     <div class="header-content">
-      <h1 class="page-title">
-        <i class="bi bi-journal-text"></i>
-        My Diaries
-      </h1>
+      <h1 class="page-title"><i class="bi bi-journal-text"></i>My Diaries</h1>
       <p class="page-subtitle">Capture your thoughts and memories</p>
+      <p class="header-count">{{ diaries.length }} {{ diaries.length === 1 ? 'entry' : 'entries' }}</p>
     </div>
     <button class="add-button" routerLink="/layout/diaries-new">
       <i class="bi bi-plus-circle"></i>
@@ -36,70 +34,107 @@
 
   <!-- Diaries Grid -->
   <div *ngIf="!isLoading && !error && diaries.length > 0" class="diaries-grid content-grid" [class.rows-layout]="currentLayout === 'rows'">
-    <div *ngFor="let diary of diaries" 
-         class="diary-card" 
-         [class.expanded]="selectedDiary?.id === diary.id"
-         (click)="openDiaryDetails(diary, $event)">
-      <div class="diary-card-body">
-        <div class="diary-cover">
-          <i class="bi bi-journal-text"></i>
-          <span class="diary-cover-letter">{{ diary.title.charAt(0) }}</span>
+    <article
+      *ngFor="let diary of diaries"
+      class="diary-card"
+      (click)="openDiaryDetails(diary, $event)"
+      tabindex="0"
+      (keydown.enter)="openDiaryDetails(diary, $event)"
+    >
+      <div class="diary-header">
+        <div class="diary-heading">
+          <span class="diary-icon"><i class="bi bi-journal-text"></i></span>
+          <div>
+            <h3 class="diary-title">{{ diary.title }}</h3>
+            <div class="diary-meta">
+              <span class="diary-type">Diary</span>
+              <span *ngIf="diary.date" class="diary-date">{{ diary.date }}</span>
+            </div>
+          </div>
         </div>
-
-        <div class="diary-info">
-          <div class="diary-header">
-            <div class="diary-title-section">
-              <h3 class="diary-title">{{ diary.title }}</h3>
-              <div class="diary-meta">
-                <span class="diary-type">Diary</span>
-                <span class="diary-date" *ngIf="diary.createdAt">
-                  <i class="bi bi-clock"></i>
-                  {{ diary.createdAt | date:'medium' }}
-                </span>
-              </div>
-            </div>
-            <div class="diary-actions" (click)="$event.stopPropagation()">
-              <button class="action-button expand" 
-                      title="View Details"
-                      (click)="openDiaryDetails(diary, $event)">
-                <i class="bi bi-arrows-fullscreen"></i>
-              </button>
-              <button class="action-button edit" (click)="editDiary(diary.id)" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="action-button delete" (click)="requestDelete(diary, $event)" title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-
-          <div class="diary-summary">
-            <div class="diary-metrics">
-              <span *ngIf="diary.date" class="diary-metric">
-                <i class="bi bi-calendar3"></i>
-                {{ diary.date }}
-              </span>
-              <span *ngIf="diary.mood" class="diary-metric">
-                <i class="bi bi-emoji-smile"></i>
-                {{ diary.mood }}
-              </span>
-              <span *ngIf="diary.weather" class="diary-metric">
-                <i class="bi bi-cloud"></i>
-                {{ diary.weather }}
-              </span>
-              <span *ngIf="diary.location" class="diary-metric">
-                <i class="bi bi-geo-alt"></i>
-                {{ diary.location }}
-              </span>
-            </div>
-          </div>
-
-          <div class="diary-body">
-            <p>{{ truncateText(diary.body, 220) }}</p>
+        <div class="diary-actions card-actions-menu" (click)="$event.stopPropagation()">
+          <button class="action-button more" (click)="toggleActionMenu(diary.id, $event)" title="More actions" aria-label="More actions">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="action-menu" *ngIf="actionMenuForDiaryId === diary.id">
+            <button type="button" (click)="editDiary(diary.id)">
+              <i class="bi bi-pencil"></i>
+              Edit
+            </button>
+            <button type="button" (click)="requestDelete(diary, $event)">
+              <i class="bi bi-trash"></i>
+              Delete
+            </button>
           </div>
         </div>
       </div>
-    </div>
+
+      <div class="diary-metrics">
+        <span *ngIf="diary.mood" class="diary-metric">{{ diary.mood }}</span>
+        <span *ngIf="diary.weather" class="diary-metric">{{ diary.weather }}</span>
+        <span *ngIf="diary.location" class="diary-metric">{{ diary.location }}</span>
+      </div>
+
+      <p class="diary-preview">{{ truncateText(diary.body, 240) }}</p>
+    </article>
+  </div>
+
+  <div class="diary-overlay" *ngIf="selectedDiary" (click)="closeDiaryDetails()">
+    <article class="diary-panel" role="dialog" aria-modal="true" aria-label="Diary details" (click)="$event.stopPropagation()">
+      <div class="diary-header">
+        <div class="diary-heading">
+          <span class="diary-icon"><i class="bi bi-journal-text"></i></span>
+          <div>
+            <h3 class="diary-title">{{ selectedDiary.title }}</h3>
+            <div class="diary-meta">
+              <span class="diary-type">Diary</span>
+              <span *ngIf="selectedDiary.date" class="diary-date">{{ selectedDiary.date }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="diary-actions card-actions-menu" (click)="$event.stopPropagation()">
+          <button class="action-button more" (click)="toggleActionMenu(selectedDiary.id, $event)" title="More actions" aria-label="More actions">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="action-menu" *ngIf="actionMenuForDiaryId === selectedDiary.id">
+            <button type="button" (click)="editDiary(selectedDiary.id)">
+              <i class="bi bi-pencil"></i>
+              Edit
+            </button>
+            <button type="button" (click)="requestDelete(selectedDiary, $event)">
+              <i class="bi bi-trash"></i>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="diary-metrics">
+        <span *ngIf="selectedDiary.mood" class="diary-metric">{{ selectedDiary.mood }}</span>
+        <span *ngIf="selectedDiary.weather" class="diary-metric">{{ selectedDiary.weather }}</span>
+        <span *ngIf="selectedDiary.location" class="diary-metric">{{ selectedDiary.location }}</span>
+      </div>
+
+      <p class="diary-preview">{{ selectedDiary.body }}</p>
+
+      <section class="diary-expanded">
+        <div class="detail-grid">
+          <p><strong>Entry:</strong> {{ selectedDiary.body }}</p>
+          <p *ngIf="selectedDiary.date"><strong>Date:</strong> {{ selectedDiary.date | date:'mediumDate' }}</p>
+          <p *ngIf="selectedDiary.createdAt"><strong>Created:</strong> {{ selectedDiary.createdAt | date:'medium' }}</p>
+          <p *ngIf="selectedDiary.mood"><strong>Mood:</strong> {{ selectedDiary.mood }}</p>
+          <p *ngIf="selectedDiary.weather"><strong>Weather:</strong> {{ selectedDiary.weather }}</p>
+          <p *ngIf="selectedDiary.location"><strong>Location:</strong> {{ selectedDiary.location }}</p>
+          <p *ngIf="selectedDiary.privateNotes"><strong>Private Notes:</strong> {{ selectedDiary.privateNotes }}</p>
+          <p *ngIf="selectedDiary.tags && selectedDiary.tags.length > 0"><strong>Tags:</strong> {{ selectedDiary.tags.join(', ') }}</p>
+        </div>
+        <div class="expanded-actions">
+          <button class="btn btn-secondary" (click)="closeDiaryDetails()">Collapse</button>
+          <button class="btn btn-primary" (click)="editDiary(selectedDiary.id)">Edit</button>
+          <button class="btn btn-danger" (click)="requestDelete(selectedDiary, $event)">Delete</button>
+        </div>
+      </section>
+    </article>
   </div>
 
   <!-- Results Count -->
@@ -107,65 +142,9 @@
     <p>Showing {{ diaries.length }} entr{{ diaries.length === 1 ? 'y' : 'ies' }}</p>
   </div>
 
-  <div class="modal confirm-modal diary-detail-modal" *ngIf="selectedDiary" (click)="closeDiaryDetails()" (keydown)="onDiaryDetailKeydown($event)">
-    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Diary details" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ selectedDiary.title }}</h3>
-        <button class="close-modal" (click)="closeDiaryDetails()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="detail-row">
-          <i class="bi bi-journal-text"></i>
-          <span class="detail-label">Entry:</span>
-          <span class="detail-value">{{ selectedDiary.body }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedDiary.date">
-          <i class="bi bi-calendar3"></i>
-          <span class="detail-label">Date:</span>
-          <span class="detail-value">{{ selectedDiary.date | date:'mediumDate' }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedDiary.createdAt">
-          <i class="bi bi-clock-history"></i>
-          <span class="detail-label">Created:</span>
-          <span class="detail-value">{{ selectedDiary.createdAt | date:'medium' }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedDiary.mood">
-          <i class="bi bi-emoji-smile"></i>
-          <span class="detail-label">Mood:</span>
-          <span class="detail-value">{{ selectedDiary.mood }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedDiary.weather">
-          <i class="bi bi-cloud"></i>
-          <span class="detail-label">Weather:</span>
-          <span class="detail-value">{{ selectedDiary.weather }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedDiary.location">
-          <i class="bi bi-geo-alt"></i>
-          <span class="detail-label">Location:</span>
-          <span class="detail-value">{{ selectedDiary.location }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedDiary.privateNotes">
-          <i class="bi bi-lock"></i>
-          <span class="detail-label">Private Notes:</span>
-          <span class="detail-value">{{ selectedDiary.privateNotes }}</span>
-        </div>
-        <div class="detail-row" *ngIf="selectedDiary.tags && selectedDiary.tags.length > 0">
-          <i class="bi bi-tags"></i>
-          <span class="detail-label">Tags:</span>
-          <div class="tags-container">
-            <span *ngFor="let tag of selectedDiary.tags" class="tag">{{ tag }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeDiaryDetails()">Close</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Edit Modal -->
-  <div id="modal" class="modal" [style.display]="modalVisible ? 'flex' : 'none'">
-    <div class="modal-content">
+  <div id="modal" class="modal" [style.display]="modalVisible ? 'flex' : 'none'" (click)="closeModal()" (keydown)="onModalKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Edit diary entry" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Edit Diary Entry</h3>
         <button class="close-modal" (click)="closeModal()">×</button>
@@ -237,8 +216,8 @@
   </div>
 
   <!-- Delete Confirmation Modal -->
-  <div class="modal confirm-modal" *ngIf="deleteTarget">
-    <div class="modal-content">
+  <div class="modal confirm-modal" *ngIf="deleteTarget" (click)="cancelDelete()" (keydown)="onModalKeydown($event)">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="Delete diary confirmation" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Delete Diary Entry</h3>
         <button class="close-modal" (click)="cancelDelete()">×</button>

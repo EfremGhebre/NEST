@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MovieService } from '../../services/movieservice.service';
 import { Movie } from '../../models/movie';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-add-movie',
@@ -39,7 +40,8 @@ export class AddMovieComponent {
 
   constructor(
     private movieService: MovieService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {}
 
   onSubmit(): void {
@@ -72,10 +74,12 @@ export class AddMovieComponent {
 
     this.movieService.addMovie(movie).subscribe({
       next: () => {
+        this.toastService.success('Movie created.');
         this.router.navigate(['/layout/movies']);
       },
       error: () => {
         this.error = 'Failed to add movie. Please try again.';
+        this.toastService.error(this.error);
         this.loading = false;
       }
     });

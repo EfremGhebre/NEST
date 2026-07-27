@@ -1,65 +1,125 @@
-<div class="layout-container">
-  <nav class="navbar">
-    <div class="navbar-brand" (click)="navigateTo('dashboard')">
+<div class="app-shell" [class.mobile-nav-open]="mobileNavOpen">
+  <aside class="sidebar" [class.open]="mobileNavOpen" aria-label="Primary">
+    <button class="brand-button" type="button" (click)="navigateTo('dashboard')">
       <img
-        class="navbar-logo-img"
-        [class.logo-light]="currentTheme !== 'dark'"
-        [class.logo-dark]="currentTheme === 'dark'"
+        class="brand-logo"
         [src]="currentTheme === 'dark' ? 'assets/nest-logo-dark.png' : 'assets/nest-logo-light.png'"
         alt="NEST logo"
       />
-    </div>
-    <div class="navbar-controls">
+    </button>
+
+    <nav class="sidebar-nav">
       <button
-        class="navbar-toggler"
-        [class.active]="isNavbarCollapsed"
-        (click)="toggleNavbar()"
+        *ngFor="let item of primaryNav"
         type="button"
-        aria-label="Toggle navigation menu"
+        class="nav-item"
+        [class.active]="isRouteActive(item.route)"
+        (click)="navigateTo(item.route)"
       >
-        <span *ngIf="!isNavbarCollapsed">&#9776;</span>
-        <span *ngIf="isNavbarCollapsed">&times;</span>
+        <i class="bi" [class]="item.icon"></i>
+        <span>{{ item.label }}</span>
+      </button>
+    </nav>
+
+    <section class="collections-shortcuts">
+      <h3>Collections</h3>
+      <button
+        *ngFor="let item of collectionsNav"
+        type="button"
+        class="collection-link"
+        [class.active]="isRouteActive(item.route)"
+        (click)="navigateTo(item.route)"
+      >
+        <span class="collection-icon" [class]="item.tintClass">
+          <i class="bi" [class]="item.icon"></i>
+        </span>
+        <span>{{ item.label }}</span>
+      </button>
+    </section>
+
+    <div class="sidebar-search global-search">
+      <i class="bi bi-search search-icon"></i>
+      <input
+        type="search"
+        [value]="searchQuery"
+        (input)="onSearchInput($event)"
+        (keydown)="onSearchKeydown($event)"
+        placeholder="Search"
+        aria-label="Search"
+      />
+      <button *ngIf="searchQuery" type="button" class="clear-search" (click)="clearSearch()" aria-label="Clear search">
+        <i class="bi bi-x"></i>
       </button>
 
-      <div class="navbar-menu" [class.active]="isNavbarCollapsed">
-        <div class="navbar-links">
-          <button class="nav-button" (click)="navigateTo('dashboard')">Dashboard</button>
-          <div class="dropdown">
-            <button class="nav-button dropdown-toggle" (click)="toggleDropdown()">
-              Collections
-              <i class="bi bi-chevron-down" [class.rotated]="isDropdownOpen"></i>
-            </button>
-            <div class="dropdown-menu" [class.show]="isDropdownOpen">
-              <button class="dropdown-item" (click)="navigateTo('books'); closeDropdown()">
-                <i class="bi bi-book"></i> Books
-              </button>
-              <button class="dropdown-item" (click)="navigateTo('quotes'); closeDropdown()">
-                <i class="bi bi-quote"></i> Quotes
-              </button>
-              <button class="dropdown-item" (click)="navigateTo('movies'); closeDropdown()">
-                <i class="bi bi-film"></i> Movies
-              </button>
-              <button class="dropdown-item" (click)="navigateTo('diaries'); closeDropdown()">
-                <i class="bi bi-journal-text"></i> Diaries
-              </button>
-              <button class="dropdown-item" (click)="navigateTo('activities'); closeDropdown()">
-                <i class="bi bi-activity"></i> Activities
-              </button>
-            </div>
-          </div>
+      <div class="search-dropdown" *ngIf="searchOpen">
+        <div class="search-state" *ngIf="searchLoading">Searching...</div>
+        <div class="search-state" *ngIf="!searchLoading && searchResults.length === 0">
+          No results found. Try another word.
         </div>
-        <div class="nav-actions">
-          <button class="nav-button profile-button" (click)="navigateTo('profile')">Profile</button>
-          <button class="theme-toggle-button" (click)="toggleTheme()" [title]="currentTheme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'">
-            <i class="bi" [class.bi-sun]="currentTheme === 'light'" [class.bi-moon]="currentTheme === 'dark'"></i>
-          </button>
-          <button class="logout-button" (click)="logout()">Logout</button>
-        </div>
+        <button
+          *ngFor="let result of searchResults; let i = index"
+          type="button"
+          class="search-result"
+          [class.active]="i === highlightedResultIndex"
+          (click)="selectSearchResult(result)"
+        >
+          <i class="bi" [class]="result.icon"></i>
+          <span class="result-text">
+            <strong>{{ result.title }}</strong>
+            <small>{{ result.subtitle }}</small>
+          </span>
+          <span class="result-type">{{ result.type }}</span>
+        </button>
       </div>
     </div>
-  </nav>
-  <div class="mobile-menu-overlay" [class.active]="isNavbarCollapsed" (click)="closeNavbarMenu()"></div>
-  <div>
-    <router-outlet></router-outlet>
+
+    <div class="sidebar-account account-menu-wrap">
+      <button type="button" class="account-trigger" (click)="toggleAccountMenu()" aria-label="Open account menu">
+        <span class="avatar">{{ userInitials }}</span>
+        <span class="account-text">
+          <strong>{{ userDisplayName }}</strong>
+          <small>Your account</small>
+        </span>
+        <i class="bi bi-chevron-up"></i>
+      </button>
+
+      <div class="account-menu" *ngIf="accountMenuOpen">
+        <button type="button" (click)="openProfile()"><i class="bi bi-person"></i> Profile</button>
+        <button type="button" (click)="toggleTheme()">
+          <i class="bi" [class.bi-sun]="currentTheme === 'light'" [class.bi-moon]="currentTheme === 'dark'"></i>
+          {{ currentTheme === 'light' ? 'Dark theme' : 'Light theme' }}
+        </button>
+        <button type="button" (click)="logout()"><i class="bi bi-box-arrow-right"></i> Logout</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="content-shell">
+    <header class="top-bar">
+      <button type="button" class="mobile-menu-btn" (click)="toggleMobileNav()" aria-label="Toggle menu">
+        <i class="bi" [class.bi-list]="!mobileNavOpen" [class.bi-x-lg]="mobileNavOpen"></i>
+      </button>
+    </header>
+
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
   </div>
+
+  <nav class="mobile-bottom-nav" aria-label="Mobile">
+    <button type="button" [class.active]="isRouteActive('dashboard')" (click)="navigateTo('dashboard')">
+      <i class="bi bi-house"></i><span>Home</span>
+    </button>
+    <button type="button" [class.active]="isRouteActive('books')" (click)="navigateTo('books')">
+      <i class="bi bi-book"></i><span>Books</span>
+    </button>
+    <button type="button" [class.active]="isRouteActive('activities')" (click)="navigateTo('activities')">
+      <i class="bi bi-activity"></i><span>Activities</span>
+    </button>
+    <button type="button" [class.active]="isRouteActive('profile')" (click)="navigateTo('profile')">
+      <i class="bi bi-person"></i><span>Profile</span>
+    </button>
+  </nav>
+
+  <div class="overlay" [class.visible]="mobileNavOpen" (click)="closeMobileNav()"></div>
 </div>

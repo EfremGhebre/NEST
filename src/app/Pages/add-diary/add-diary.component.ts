@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DiaryService } from '../../services/diaryservice.service';
 import { Diary } from '../../models/diary';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-add-diary',
@@ -49,7 +50,8 @@ export class AddDiaryComponent {
 
   constructor(
     private diaryService: DiaryService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {}
 
   onSubmit(): void {
@@ -84,10 +86,12 @@ export class AddDiaryComponent {
 
     this.diaryService.addDiary(diary).subscribe({
       next: () => {
+        this.toastService.success('Diary entry created.');
         this.router.navigate(['/layout/diaries']);
       },
       error: () => {
         this.error = 'Failed to add diary entry. Please try again.';
+        this.toastService.error(this.error);
         this.loading = false;
       }
     });

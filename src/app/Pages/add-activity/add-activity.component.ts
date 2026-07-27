@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router } from '@angular/router';
 import { ActivityService } from '../../services/activityservice.service';
 import { Activity } from '../../models/activity';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-add-activity',
@@ -43,7 +44,8 @@ export class AddActivityComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private activityService: ActivityService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {
     this.activityForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
@@ -96,11 +98,13 @@ export class AddActivityComponent implements OnInit {
       this.activityService.createActivity(activity).subscribe({
         next: (createdActivity) => {
           console.log('Activity created successfully:', createdActivity);
+          this.toastService.success('Activity created.');
           this.router.navigate(['/layout/activities']);
         },
         error: (error) => {
           console.error('Error creating activity:', error);
           this.error = 'Failed to create activity. Please try again.';
+          this.toastService.error(this.error);
           this.loading = false;
         }
       });

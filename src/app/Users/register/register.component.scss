@@ -11,7 +11,7 @@
   text-align: center;
   font-size: 1.38rem;
   margin-bottom: 1.15rem;
-  color: #0f5132;
+  color: var(--color-text-primary);
   font-weight: 700;
   letter-spacing: 0.01em;
 }
@@ -27,31 +27,31 @@
 
 .form-label {
   font-weight: 600;
-  color: #334155;
+  color: var(--color-text-secondary);
   font-size: 0.89rem;
   margin-bottom: 0.42rem;
 }
 
 .form-control {
   border-radius: 10px;
-  border: 1px solid rgba(15, 23, 42, 0.14);
+  border: 1px solid var(--color-border);
   padding: 0.72rem 0.88rem;
   min-height: 44px;
   font-size: 0.95rem;
-  background: rgba(248, 250, 252, 0.94);
-  color: #0f172a;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .form-control:focus {
-  border-color: rgba(22, 163, 74, 0.6);
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14);
-  background: #ffffff;
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 22%, transparent);
+  background: var(--color-surface);
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  border: none;
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
   border-radius: 10px;
   padding: 0.72rem 1rem;
   min-height: 44px;
@@ -62,15 +62,14 @@
 }
 
 .btn-success:hover {
-  filter: brightness(0.98);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(22, 163, 74, 0.22);
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .back-home-link {
   background: transparent;
   border: 0;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-weight: 600;
   font-size: 0.94rem;
   margin-top: 0.7rem;
@@ -82,44 +81,28 @@
 }
 
 .back-home-link:hover {
-  color: #0f172a;
+  color: var(--color-text-primary);
   transform: translateY(-1px);
 }
 
-body[data-theme='dark'] .auth-box {
-  color: rgba(255, 255, 255, 0.92);
+.form-error,
+.form-success {
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.85rem;
+  font-size: 0.9rem;
 }
 
-body[data-theme='dark'] .auth-title {
-  color: rgba(255, 255, 255, 0.95);
+.form-error {
+  border: 1px solid color-mix(in srgb, var(--color-danger) 50%, transparent);
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
 }
 
-body[data-theme='dark'] .form-label {
-  color: rgba(255, 255, 255, 0.82);
-}
-
-body[data-theme='dark'] .form-control {
-  background: rgba(15, 23, 42, 0.54);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.94);
-}
-
-body[data-theme='dark'] .form-control::placeholder {
-  color: rgba(255, 255, 255, 0.54);
-}
-
-body[data-theme='dark'] .form-control:focus {
-  background: rgba(15, 23, 42, 0.72);
-  border-color: rgba(74, 222, 128, 0.6);
-  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.16);
-}
-
-body[data-theme='dark'] .back-home-link {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-body[data-theme='dark'] .back-home-link:hover {
-  color: rgba(255, 255, 255, 0.94);
+.form-success {
+  border: 1px solid color-mix(in srgb, var(--color-success) 50%, transparent);
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
 }
 
 @media (max-width: 767px) {
