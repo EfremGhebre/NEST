@@ -1115,8 +1115,8 @@ app.delete('/api/activities/:id', authMiddleware, async (req, res) => {
 async function start() {
   try {
     await initDb();
-    app.listen(PORT, () => {
-      console.log(`API listening on http://localhost:${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`API listening on port ${PORT}`);
     });
   } catch (e) {
     console.error('Failed to initialize database:', e);
