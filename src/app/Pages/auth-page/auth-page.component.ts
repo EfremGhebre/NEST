@@ -8,7 +8,7 @@ import { RegisterComponent } from '../../Users/register/register.component';
   standalone: true,
   imports: [CommonModule, LoginComponent, RegisterComponent],
   templateUrl: './auth-page.component.html',
-  styleUrl: './auth-page.component.scss',
+  styleUrls: ['./auth-page.component.scss'],
 })
 export class AuthPageComponent {
   mode: 'login' | 'register' = 'login';

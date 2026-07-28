@@ -16,7 +16,7 @@ import { ToastService } from '../../services/toast.service';
   imports: [CommonModule, FormsModule, RouterModule],
   providers: [],
   templateUrl: './books.component.html',
-  styleUrl: './books.component.scss',
+  styleUrls: ['./books.component.scss'],
 })
 export class BooksComponent implements OnInit, OnDestroy {
   books: Book[] = [];

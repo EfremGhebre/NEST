@@ -8,7 +8,7 @@ import { ToastContainerComponent } from './shared/toast-container/toast-containe
   standalone: true,
   imports: [RouterOutlet, ToastContainerComponent],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
   title = 'BnQ';
