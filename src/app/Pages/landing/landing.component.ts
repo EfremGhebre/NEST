@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../services/theme.service';
@@ -10,7 +10,8 @@ import { Subscription } from 'rxjs';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './landing.component.html',
-  styleUrl: './landing.component.scss',
+  styleUrls: ['./landing.component.scss'],
+  encapsulation: ViewEncapsulation.None,
 })
 export class LandingComponent implements OnInit, OnDestroy {
   isNavbarCollapsed = false;
